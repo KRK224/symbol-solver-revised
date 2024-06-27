@@ -18,6 +18,7 @@ public class VariableDeclarationDTO implements FQNReferable {
     private String accessModifier;
     private String type;
     private Position position;
+    private Long initializerExprId;
 
     @Override
     public String toString() {

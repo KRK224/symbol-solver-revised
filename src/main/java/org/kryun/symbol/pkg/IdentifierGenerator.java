@@ -1,4 +1,4 @@
-package org.kryun.symbol.javaparser.management;
+package org.kryun.symbol.pkg;
 
 import lombok.Getter;
 

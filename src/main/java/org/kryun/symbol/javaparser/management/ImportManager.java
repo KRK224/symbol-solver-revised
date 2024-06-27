@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.kryun.symbol.pkg.IdentifierGenerator;
 
 public class ImportManager {
     private final List<JavaParserImportDTO> javaParserImportDTOList;

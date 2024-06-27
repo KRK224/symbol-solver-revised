@@ -33,8 +33,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.kryun.symbol.pkg.build.interfaces.SymbolContainer;
 
-public class ConvertJavaParserToSymbol {
+public class ConvertJavaParserToSymbol implements SymbolContainer {
 
     private final Long symbolStatusId;
     private final Boolean isDependency;
@@ -255,15 +256,32 @@ public class ConvertJavaParserToSymbol {
         else if (nodeType.equals("FieldDeclaration")) {
             JavaParserClassDTO belongedJavaParserClassDTO = classManager.getClassDTOList()
                     .get(classManager.getClassDTOList().size() - 1);
-            JavaParserMemberVariableDeclarationDTO mvdDto = variableManager.buildVariableDeclInMemberField(javaParserBlockDTO,
-                    belongedJavaParserClassDTO.getClassId(), node);
-            typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, mvdDto, typeImportMapper);
+            List<JavaParserMemberVariableDeclarationDTO> mvdDtoList = variableManager.buildVariableDeclInMemberField(javaParserBlockDTO,
+                    belongedJavaParserClassDTO.getClassId(), node, expressionManager);
+
+            JavaParserMemberVariableDeclarationDTO firstMvdDTO = mvdDtoList.get(0);
+            typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, firstMvdDTO, typeImportMapper);
+            if(mvdDtoList.size() > 1 && firstMvdDTO.getFullQualifiedNameId() != null) {
+                for (int i = 1; i < mvdDtoList.size(); i++) {
+                    JavaParserMemberVariableDeclarationDTO mvdDto = mvdDtoList.get(i);
+                    mvdDto.setFullQualifiedNameId(firstMvdDTO.getFullQualifiedNameId());
+                    typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, mvdDto, typeImportMapper);
+                }
+            }
 
         }
         // 함수 내에서 선언하는 변수
         else if (nodeType.equals("VariableDeclarationExpr")) {
-            JavaParserStmtVariableDeclarationDTO stmtDto = variableManager.buildVariableDeclInMethod(javaParserBlockDTO, node);
-            typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, stmtDto, typeImportMapper);
+            List<JavaParserStmtVariableDeclarationDTO> stmtDtoList = variableManager.buildVariableDeclInMethod(javaParserBlockDTO, node, expressionManager);
+            JavaParserStmtVariableDeclarationDTO firstStmtDTO = stmtDtoList.get(0);
+            typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, firstStmtDTO, typeImportMapper);
+            if(stmtDtoList.size() > 1 && firstStmtDTO.getFullQualifiedNameId() != null) {
+                for (int i = 1; i < stmtDtoList.size(); i++) {
+                    JavaParserStmtVariableDeclarationDTO stmtDto = stmtDtoList.get(i);
+                    stmtDto.setFullQualifiedNameId(firstStmtDTO.getFullQualifiedNameId());
+                    typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, stmtDto, typeImportMapper);
+                }
+            }
 
         } else if (nodeType.equals("MethodDeclaration") || nodeType.equals(
                 "ConstructorDeclaration")) {

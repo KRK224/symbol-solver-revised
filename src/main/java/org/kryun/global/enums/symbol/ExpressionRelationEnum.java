@@ -12,7 +12,7 @@ public enum ExpressionRelationEnum {
     METHOD_CALL_SCOPE("MethodCallExpr", "Scope"), UNARY_EXPRESSION("UnaryExpr",
             "Expression"), LAMBDA_EXPRESSION("LambdaExpr", "Expression"),
     METHOD_REFERENCE_SCOPE("MethodReferenceExpr", "Scope"), OBJECT_CREATION_TYPE(
-            "ObjectCreationExpr", "Type");
+            "ObjectCreationExpr", "Type"), VARIABLE_DECLARATOR_INIT("VariableDeclarator", "Init");
 
     private final String parentType;
     private final String childType;

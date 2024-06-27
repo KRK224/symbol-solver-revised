@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
+import org.kryun.symbol.pkg.IdentifierGenerator;
 
 @Getter
 public class MethodManager {

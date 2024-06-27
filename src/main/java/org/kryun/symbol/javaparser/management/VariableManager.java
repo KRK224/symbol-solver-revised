@@ -5,9 +5,11 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.VariableDeclarationExpr;
-import com.github.javaparser.ast.type.Type;
+import org.kryun.global.enums.symbol.ExpressionRelationEnum;
 import org.kryun.symbol.javaparser.model.dto.JavaParserBlockDTO;
+import org.kryun.symbol.javaparser.model.dto.JavaParserExpressionDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserMemberVariableDeclarationDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserStmtVariableDeclarationDTO;
 import org.kryun.symbol.model.dto.Position;
@@ -15,10 +17,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.Getter;
+import org.kryun.symbol.pkg.IdentifierGenerator;
 
-// initializer에 value 안들어감, Initializer의 type 제대로 못가져옴
 @Getter
 public class VariableManager {
 
@@ -46,18 +47,13 @@ public class VariableManager {
         this.javaParserStmtVariableDeclarationDTOList.clear();
     }
 
-    public JavaParserMemberVariableDeclarationDTO buildVariableDeclInMemberField(JavaParserBlockDTO javaParserBlockDTO, Long belongedClassId, Node node) {
+    public List<JavaParserMemberVariableDeclarationDTO> buildVariableDeclInMemberField(JavaParserBlockDTO javaParserBlockDTO, Long belongedClassId, Node node, ExpressionManager expressionManager) {
         Long blockId = javaParserBlockDTO.getBlockId();
-        JavaParserMemberVariableDeclarationDTO variableDeclarationDTO = new JavaParserMemberVariableDeclarationDTO();
         FieldDeclaration fieldDeclaration = (FieldDeclaration) node;
+        List<JavaParserMemberVariableDeclarationDTO> variableDeclarationDTOList = new ArrayList<>();
 
         String modifierKeyword = "";
         String accessModifierKeyword = "";
-        Type variableType = null;
-        String type = "";
-        String name = "";
-        boolean isGeneric = false;
-        Optional<Node> initializer = Optional.empty();
 
         // 변수 제어자
         NodeList<Modifier> modifiers = fieldDeclaration.getModifiers();
@@ -74,42 +70,46 @@ public class VariableManager {
         }
         // 변수 이름, 타입
         NodeList<VariableDeclarator> variableDeclarators = fieldDeclaration.getVariables();
-        for (VariableDeclarator variableDeclarator : variableDeclarators) {
-            type = variableDeclarator.getType().asString();
-            name = variableDeclarator.getName().asString();
+        for (int i = 0; i < variableDeclarators.size(); i++) {
+            VariableDeclarator variableDeclarator = variableDeclarators.get(i);
 
+            String type = variableDeclarator.getType().asString();
+            String name = variableDeclarator.getName().asString();
+
+            JavaParserMemberVariableDeclarationDTO variableDeclarationDTO = new JavaParserMemberVariableDeclarationDTO();
+            variableDeclarationDTO.setVariableId(memVarDeclIdGenerator.nextId());
+            variableDeclarationDTO.setBlockId(blockId);
+            variableDeclarationDTO.setBelongedClassId(belongedClassId);
+            variableDeclarationDTO.setType(type);
+            variableDeclarationDTO.setName(name);
+            variableDeclarationDTO.setModifier(modifierKeyword);
+            variableDeclarationDTO.setAccessModifier(accessModifierKeyword);
+            variableDeclarationDTO.setPosition(
+                    new Position(
+                            i==0 ? node.getRange().get().begin.line:variableDeclarator.getRange().get().begin.line,
+                            i==0 ? node.getRange().get().begin.column:variableDeclarator.getRange().get().begin.column,
+                            i==0 ? node.getRange().get().end.line:variableDeclarator.getRange().get().end.line,
+                            i==0 ? node.getRange().get().end.column:variableDeclarator.getRange().get().end.column));
+
+            javaParserMemberVariableDeclarationDTOList.add(variableDeclarationDTO);
+            variableDeclarationDTOList.add(variableDeclarationDTO);
+            if(variableDeclarator.getInitializer().isPresent()){
+                Expression expression = variableDeclarator.getInitializer().get();
+                JavaParserExpressionDTO initializerExpr = expressionManager.buildExpressionRecursively(null, ExpressionRelationEnum.VARIABLE_DECLARATOR_INIT, blockId, expression);
+                variableDeclarationDTO.setInitializerExpr(initializerExpr);
+                variableDeclarationDTO.setInitializerExprId(initializerExpr.getExpressionId());
+            }
         }
-
-        variableDeclarationDTO.setVariableId(memVarDeclIdGenerator.nextId());
-        variableDeclarationDTO.setBlockId(blockId);
-        variableDeclarationDTO.setBelongedClassId(belongedClassId);
-        variableDeclarationDTO.setType(type);
-        variableDeclarationDTO.setName(name);
-        variableDeclarationDTO.setModifier(modifierKeyword);
-        variableDeclarationDTO.setAccessModifier(accessModifierKeyword);
-        variableDeclarationDTO.setNode(node);
-        variableDeclarationDTO.setPosition(
-                new Position(
-                        node.getRange().get().begin.line,
-                        node.getRange().get().begin.column,
-                        node.getRange().get().end.line,
-                        node.getRange().get().end.column));
-
-        javaParserMemberVariableDeclarationDTOList.add(variableDeclarationDTO);
-        return variableDeclarationDTO;
+        return variableDeclarationDTOList;
     }
 
-    public JavaParserStmtVariableDeclarationDTO buildVariableDeclInMethod(JavaParserBlockDTO javaParserBlockDTO, Node node) {
+    public List<JavaParserStmtVariableDeclarationDTO> buildVariableDeclInMethod(JavaParserBlockDTO javaParserBlockDTO, Node node, ExpressionManager expressionManager) {
         Long blockId = javaParserBlockDTO.getBlockId();
-        JavaParserStmtVariableDeclarationDTO variableDeclarationDTO = new JavaParserStmtVariableDeclarationDTO();
         VariableDeclarationExpr variableDeclarationExpr = (VariableDeclarationExpr) node;
+        List<JavaParserStmtVariableDeclarationDTO> variableDeclarationDTOList = new ArrayList<>();
 
         String modifierKeyword = "";
         String accessModifierKeyword = "";
-        Type variableType = null;
-        String type = "";
-        String name = "";
-        boolean isGeneric = false;
 
         // 변수 제어자
         NodeList<Modifier> modifiers = variableDeclarationExpr.getModifiers();
@@ -126,30 +126,38 @@ public class VariableManager {
         }
         // 변수 이름, 타입
         NodeList<VariableDeclarator> variableDeclarators = variableDeclarationExpr.getVariables();
-        for (VariableDeclarator variableDeclarator : variableDeclarators) {
 
-            type = variableDeclarator.getType().asString();
-            name = variableDeclarator.getName().asString();
+        for (int i = 0; i < variableDeclarators.size(); i++) {
+            VariableDeclarator variableDeclarator = variableDeclarators.get(i);
+            String type = variableDeclarator.getType().asString();
+            String name = variableDeclarator.getName().asString();
+            JavaParserStmtVariableDeclarationDTO variableDeclarationDTO = new JavaParserStmtVariableDeclarationDTO();
 
+            variableDeclarationDTO.setVariableId(stmtVarDeclIdGenerator.nextId());
+            variableDeclarationDTO.setBlockId(blockId);
+
+            variableDeclarationDTO.setType(type);
+            variableDeclarationDTO.setName(name);
+            variableDeclarationDTO.setModifier(modifierKeyword);
+            variableDeclarationDTO.setAccessModifier(accessModifierKeyword);
+            variableDeclarationDTO.setPosition(
+                    new Position(
+                            i==0 ? node.getRange().get().begin.line:variableDeclarator.getRange().get().begin.line,
+                            i==0 ? node.getRange().get().begin.column:variableDeclarator.getRange().get().begin.column,
+                            i==0 ? node.getRange().get().end.line:variableDeclarator.getRange().get().end.line,
+                            i==0 ? node.getRange().get().end.column:variableDeclarator.getRange().get().end.column));
+            javaParserStmtVariableDeclarationDTOList.add(variableDeclarationDTO);
+            variableDeclarationDTOList.add(variableDeclarationDTO);
+
+            if(variableDeclarator.getInitializer().isPresent()){
+                Expression expression = variableDeclarator.getInitializer().get();
+                JavaParserExpressionDTO initializerExpr = expressionManager.buildExpressionRecursively(null, ExpressionRelationEnum.VARIABLE_DECLARATOR_INIT, blockId, expression);
+                variableDeclarationDTO.setInitializerExpr(initializerExpr);
+                variableDeclarationDTO.setInitializerExprId(initializerExpr.getExpressionId());
+            }
         }
-
-        variableDeclarationDTO.setVariableId(stmtVarDeclIdGenerator.nextId());
-        variableDeclarationDTO.setBlockId(blockId);
-
-        variableDeclarationDTO.setType(type);
-        variableDeclarationDTO.setName(name);
-        variableDeclarationDTO.setModifier(modifierKeyword);
-        variableDeclarationDTO.setAccessModifier(accessModifierKeyword);
-        variableDeclarationDTO.setNode(node);
-        variableDeclarationDTO.setPosition(
-                new Position(
-                        node.getRange().get().begin.line,
-                        node.getRange().get().begin.column,
-                        node.getRange().get().end.line,
-                        node.getRange().get().end.column));
-
-        javaParserStmtVariableDeclarationDTOList.add(variableDeclarationDTO);
-        return variableDeclarationDTO;
+        return variableDeclarationDTOList;
     }
+
 
 }

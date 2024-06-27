@@ -1,6 +1,7 @@
 package org.kryun.symbol.javaparser.model.dto;
 
 import com.github.javaparser.ast.Node;
+import java.util.Optional;
 import org.kryun.symbol.model.dto.StmtVariableDeclarationDTO;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class JavaParserStmtVariableDeclarationDTO extends StmtVariableDeclarationDTO {
-    private Node node;  // Todo. 이거 필요한지 알아보기...
+    private JavaParserExpressionDTO initializerExpr;
 
     @Override
     public String toString() {
@@ -16,9 +17,9 @@ public class JavaParserStmtVariableDeclarationDTO extends StmtVariableDeclaratio
                 "variableId : " + getVariableId() +
                 ", blockId : " + getBlockId() +
                 ", name : '" + getName() + '\'' +
-                "', nodeType: '" + node.getMetaModel().getTypeName() +
                 ", modifier : '" + getModifier() + '\'' +
                 ", accessModifier : '" + getAccessModifier() + '\'' +
+                ", initializerExpr : '" + Optional.ofNullable(initializerExpr).map(JavaParserExpressionDTO::getExpression).orElse(null) + '\'' +
                 ", type : '" + getType() + '\'' +
                 ", Position : '" + getPosition() +
                 "}\n";
