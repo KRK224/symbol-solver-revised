@@ -1,6 +1,7 @@
 package org.kryun.symbol.pkg.build.interfaces;
 
 import java.util.List;
+import java.util.Map;
 import org.kryun.symbol.model.dto.ArgumentDTO;
 import org.kryun.symbol.model.dto.BlockDTO;
 import org.kryun.symbol.model.dto.ClassDTO;
@@ -17,6 +18,8 @@ import org.kryun.symbol.model.dto.StmtVariableDeclarationDTO;
 import org.kryun.symbol.model.dto.SymbolReferenceDTO;
 
 public interface SymbolContainer {
+
+    Map<String, Long> getSymbolIds();
     List<SymbolReferenceDTO> getSymbolReferenceDTOList();
     List<FullQualifiedNameDTO> getFullQualifiedNameDTOList();
     List<? extends BlockDTO> getBlockDTOList();

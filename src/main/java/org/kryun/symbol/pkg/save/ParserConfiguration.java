@@ -19,7 +19,7 @@ public class ParserConfiguration {
         return new SymbolBuilderWithJavaParser(symbolStatusId, projectPath, projectName, isDependency);
     }
 
-    public static SymbolSaver getFileSymbolSaver() {
-        return new SaveSymbolToFile();
+    public static SymbolSaver getFileSymbolSaver(String projectPath, String projectName, String fileType) {
+        return fileType.equals("excel") ? new SaveSymbolToExcel(projectPath, projectName): new SaveSymbolToCSV(projectPath, projectName);
     }
 }

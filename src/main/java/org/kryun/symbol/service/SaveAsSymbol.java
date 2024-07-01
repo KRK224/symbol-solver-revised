@@ -40,7 +40,7 @@ public class SaveAsSymbol {
 
     private ProjectParser getProjectParser(Long symbolStatusId, String projectPath, String projectName, Boolean isDependency)
             throws Exception {
-        SymbolSaver symbolSaver = ParserConfiguration.getFileSymbolSaver();
+        SymbolSaver symbolSaver = ParserConfiguration.getFileSymbolSaver(projectPath, projectName, "csv");
 
         SymbolBuilder symbolBuilder = ParserConfiguration.getJavaParserSymbolBuilder(symbolStatusId, projectPath, projectName, isDependency);
 

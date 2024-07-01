@@ -17,12 +17,10 @@ public class Position {
     @Override
     public String toString() {
         return "{" +
-                "begin [" +
-                "line: " + beginLine + ", column: " + beginColumn +
-                "]," +
-                "end [" +
-                "line: " + endLine + ", column: " + endColumn +
-                "]" +
+                "beginLine: " + beginLine +
+                ", beginColumn: " + beginColumn +
+                ", endLine: " + endLine +
+                ", endColumn: " + endColumn +
                 "}";
     }
 }
