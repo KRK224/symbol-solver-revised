@@ -1,6 +1,8 @@
 package org.kryun.symbol.model.dto;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.kryun.global.enums.symbol.ExpressionRelationEnum;
 
@@ -28,4 +30,5 @@ public class ExpressionDTO {
                 ", Position : '" + position + '\'' +
                 "}\n";
     }
+
 }

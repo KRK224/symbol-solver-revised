@@ -16,6 +16,7 @@ public interface SymbolSaverToFile extends SymbolSaver {
         }
     }
 
+
     static List<String> createHeader(Class<?> classType) throws Exception {
         List<String> columnList = new ArrayList<>();
         Class<?> clazz = classType;
@@ -24,8 +25,6 @@ public interface SymbolSaverToFile extends SymbolSaver {
                 columnList.add(field.getName());
             }
             clazz = clazz.getSuperclass();
-            System.out.println("super clazz = " + clazz);
-            System.out.println("super clazz.getPackage() = " + clazz.getPackage());
             if (!clazz.getPackage().equals(classType.getPackage()))
                 clazz = null;
         }

@@ -1,4 +1,4 @@
-package org.kryun.symbol.pkg.build.interfaces;
+package org.kryun.symbol.pkg.builder.interfaces;
 
 import java.util.List;
 import java.util.Map;

@@ -11,7 +11,8 @@ public class Main {
     public static void main(String[] args) throws Exception {
         String projectPath = AppConfig.WORKSPACE_PATH;
         SaveAsSymbol saveAsSymbol = new SaveAsSymbol();
-        SymbolStatusDTO symbolStatusDTO = saveAsSymbol.saveAsSymbol("blank", projectPath);
+//        SymbolStatusDTO symbolStatusDTO = saveAsSymbol.saveAsSymbol("blank", projectPath, null);
+        SymbolStatusDTO symbolStatusDTO = saveAsSymbol.saveAsSymbol("blank", projectPath, "/Users/krk224/Documents/Tmax/1_source/symbol-solver-revised/workspace/result/blank/csv/2024-07-02_154142");
     }
 
 }

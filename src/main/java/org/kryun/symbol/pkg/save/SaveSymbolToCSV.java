@@ -10,21 +10,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.kryun.symbol.model.dto.ArgumentDTO;
-import org.kryun.symbol.model.dto.BlockDTO;
-import org.kryun.symbol.model.dto.ClassDTO;
-import org.kryun.symbol.model.dto.ExpressionDTO;
-import org.kryun.symbol.model.dto.FullQualifiedNameDTO;
-import org.kryun.symbol.model.dto.ImportDTO;
-import org.kryun.symbol.model.dto.MemberVariableDeclarationDTO;
-import org.kryun.symbol.model.dto.MethodCallExprDTO;
-import org.kryun.symbol.model.dto.MethodDeclarationDTO;
-import org.kryun.symbol.model.dto.PackageDTO;
-import org.kryun.symbol.model.dto.ParameterDTO;
-import org.kryun.symbol.model.dto.ReturnMapperDTO;
-import org.kryun.symbol.model.dto.StmtVariableDeclarationDTO;
-import org.kryun.symbol.model.dto.SymbolReferenceDTO;
-import org.kryun.symbol.pkg.build.interfaces.SymbolContainer;
+import org.kryun.symbol.model.dto.*;
+import org.kryun.symbol.pkg.builder.interfaces.SymbolContainer;
 import org.kryun.symbol.pkg.save.interfaces.SymbolSaver;
 import org.kryun.symbol.pkg.save.interfaces.SymbolSaverToFile;
 import org.slf4j.Logger;
@@ -40,20 +27,20 @@ public class SaveSymbolToCSV implements SymbolSaver {
     @Override
     public void save(SymbolContainer symbolContainer) throws Exception {
         String directory = createDirectory();
-//        saveCSVFile(symbolContainer.getSymbolReferenceDTOList(), SymbolReferenceDTO.class, directory);
-//        saveCSVFile(symbolContainer.getFullQualifiedNameDTOList(), FullQualifiedNameDTO.class, directory);
-//        saveCSVFile(symbolContainer.getBlockDTOList(), BlockDTO.class, directory);
-//        saveCSVFile(symbolContainer.getPackageDTOList(), PackageDTO.class, directory);
-//        saveCSVFile(symbolContainer.getClassDTOList(), ClassDTO.class, directory);
-//        saveCSVFile(symbolContainer.getImportDTOList(), ImportDTO.class, directory);
-//        saveCSVFile(symbolContainer.getExpressionDTOList(), ExpressionDTO.class, directory);
+        saveCSVFile(symbolContainer.getSymbolReferenceDTOList(), SymbolReferenceDTO.class, directory);
+        saveCSVFile(symbolContainer.getFullQualifiedNameDTOList(), FullQualifiedNameDTO.class, directory);
+        saveCSVFile(symbolContainer.getBlockDTOList(), BlockDTO.class, directory);
+        saveCSVFile(symbolContainer.getPackageDTOList(), PackageDTO.class, directory);
+        saveCSVFile(symbolContainer.getClassDTOList(), ClassDTO.class, directory);
+        saveCSVFile(symbolContainer.getImportDTOList(), ImportDTO.class, directory);
+        saveCSVFile(symbolContainer.getExpressionDTOList(), ExpressionDTO.class, directory);
         saveCSVFile(symbolContainer.getMemberVariableDeclarationDTOList(), MemberVariableDeclarationDTO.class, directory);
-//        saveCSVFile(symbolContainer.getMethodDeclarationDTOList(), MethodDeclarationDTO.class, directory);
-//        saveCSVFile(symbolContainer.getMethodCallExprDTOList(), MethodCallExprDTO.class, directory);
+        saveCSVFile(symbolContainer.getMethodDeclarationDTOList(), MethodDeclarationDTO.class, directory);
+        saveCSVFile(symbolContainer.getMethodCallExprDTOList(), MethodCallExprDTO.class, directory);
         saveCSVFile(symbolContainer.getStmtVariableDeclarationDTOList(), StmtVariableDeclarationDTO.class, directory);
-//        saveCSVFile(symbolContainer.getArgumentDTOList(), ArgumentDTO.class, directory);
-//        saveCSVFile(symbolContainer.getParameterDTOList(), ParameterDTO.class, directory);
-//        saveCSVFile(symbolContainer.getReturnMapperDTOList(), ReturnMapperDTO.class, directory);
+        saveCSVFile(symbolContainer.getArgumentDTOList(), ArgumentDTO.class, directory);
+        saveCSVFile(symbolContainer.getParameterDTOList(), ParameterDTO.class, directory);
+        saveCSVFile(symbolContainer.getReturnMapperDTOList(), ReturnMapperDTO.class, directory);
     }
 
     private String createDirectory() throws Exception {
@@ -93,6 +80,8 @@ public class SaveSymbolToCSV implements SymbolSaver {
                         field = clazz.getDeclaredField(column);
                     } catch (NoSuchFieldException e) {
                         clazz = clazz.getSuperclass();
+                        if(!clazz.getPackage().equals(classType.getPackage()))
+                            throw new Exception("SaveSymbolToCSV::saveCSVFile::" + column + " is not found in " + classType.getSimpleName());
                         field = clazz.getDeclaredField(column);
                     }
                     String getterMethodName = SymbolSaverToFile.getGetterMethodName(field);

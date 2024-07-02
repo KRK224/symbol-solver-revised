@@ -33,7 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.kryun.symbol.pkg.build.interfaces.SymbolContainer;
+import org.kryun.symbol.pkg.builder.interfaces.SymbolContainer;
 
 public class ConvertJavaParserToSymbol implements SymbolContainer {
 
