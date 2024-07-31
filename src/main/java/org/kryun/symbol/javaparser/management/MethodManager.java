@@ -41,6 +41,8 @@ public class MethodManager {
     private final IdentifierGenerator returnMapperIdGenerator = new IdentifierGenerator("return_mapper");
     private final IdentifierGenerator methodCallExprIdGenerator = new IdentifierGenerator("method_call_expr");
 
+    private final ExpressionManager expressionManager;
+    private final Boolean isDependency;
 
     public Map<String, Long> getIdentifierMap() {
         Map<String, Long> identifierMap = new LinkedHashMap<>();
@@ -54,12 +56,14 @@ public class MethodManager {
 
     // private final Map<String, Long> symbolIds;
 
-    public MethodManager() {
+    public MethodManager(ExpressionManager expressionManager, Boolean isDependency) {
         this.javaParserMethodDeclarationDTOList = new ArrayList<>();
         this.javaParserMethodCallExprDTOList = new ArrayList<>();
         this.javaParserParameterDTOList = new ArrayList<>();
         this.javaParserArgumentDTOList = new ArrayList<>();
         this.javaParserReturnMapperDTOList = new ArrayList<>();
+        this.expressionManager = expressionManager;
+        this.isDependency = isDependency;
     }
 
     public void clear() {
@@ -182,7 +186,7 @@ public class MethodManager {
         return javaParserMethodDeclarationDTO;
     }
 
-    public JavaParserMethodCallExprDTO buildMethodCallExpr(JavaParserBlockDTO javaParserBlockDTO, Node node, ExpressionManager expressionManager) {
+    public JavaParserMethodCallExprDTO buildMethodCallExpr(JavaParserBlockDTO javaParserBlockDTO, Node node) {
         Long methodCallExprId = methodCallExprIdGenerator.nextId();
         Long blockId = javaParserBlockDTO.getBlockId();
         JavaParserMethodCallExprDTO javaParserMethodCallExprDTO = new JavaParserMethodCallExprDTO();

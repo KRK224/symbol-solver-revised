@@ -33,15 +33,16 @@ import org.kryun.symbol.model.dto.StmtVariableDeclarationDTO;
 import org.kryun.symbol.model.dto.SymbolReferenceDTO;
 import org.kryun.symbol.pkg.builder.interfaces.SymbolContainer;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.kryun.symbol.pkg.save.interfaces.SymbolSaverToFile;
+import org.kryun.symbol.pkg.save.interfaces.SymbolSaver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RequiredArgsConstructor
-public class SaveSymbolToExcel implements SymbolSaverToFile {
+public class SaveSymbolToExcel implements SymbolSaver {
     private final Logger logger = LoggerFactory.getLogger(SaveSymbolToExcel.class);
     private final String projectPath;
     private final String projectName;
+    private String savePath;
 
     @Override
     public void save(SymbolContainer symbolContainer) throws Exception {
@@ -70,6 +71,11 @@ public class SaveSymbolToExcel implements SymbolSaverToFile {
         }
     }
 
+    @Override
+    public String getInfo() {
+        return savePath;
+    }
+
     private void saveExcelFile(XSSFWorkbook wb) throws Exception {
         try {
             // Create Excel file
@@ -88,8 +94,8 @@ public class SaveSymbolToExcel implements SymbolSaverToFile {
                 logger.info("Folder already exists");
             }
 
-            String path = resultDirectory.getAbsolutePath() + "/" + formatedNow + projectName + ".xlsx";
-            FileOutputStream fileOut = new FileOutputStream(path);
+            savePath = resultDirectory.getAbsolutePath() + "/" + formatedNow + projectName + ".xlsx";
+            FileOutputStream fileOut = new FileOutputStream(savePath);
             wb.write(fileOut);
             wb.close();
 
@@ -101,10 +107,7 @@ public class SaveSymbolToExcel implements SymbolSaverToFile {
 
     private void createExcelSheet(XSSFWorkbook wb, List<?> dataList, Class<?> classType) throws Exception {
         String sheetName = classType.getSimpleName();
-        System.out.println("sheetName = " + sheetName);
-        System.out.println("clazz = " + classType);
-        List<String> columnList = SymbolSaverToFile.createHeader(classType);
-        System.out.println("columnList = " + columnList);
+        List<String> columnList = SymbolSaver.createHeader(classType);
 
         // Create Excel title
         XSSFSheet sheet = createTitle(wb, columnList, sheetName);
@@ -124,7 +127,7 @@ public class SaveSymbolToExcel implements SymbolSaverToFile {
                     clazz = clazz.getSuperclass();
                     field = clazz.getDeclaredField(columnList.get(j));
                 }
-                String getterMethodName = SymbolSaverToFile.getGetterMethodName(field);
+                String getterMethodName = SymbolSaver.getGetterMethodName(field);
                 try {
                     Object invoke = clazz.getDeclaredMethod(getterMethodName).invoke(data);
                     if (invoke!=null)

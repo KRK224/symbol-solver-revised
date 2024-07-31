@@ -9,13 +9,13 @@ public class SymbolBuilderWithFile implements SymbolBuilder {
     private final Logger logger = LoggerFactory.getLogger(SymbolBuilderWithFile.class);
 
     private final Long symbolStatusId;
-    private final String filePath;
+    private final String symbolDataPath;
     private final CSVParser csvParser;
 
-    public SymbolBuilderWithFile(Long symbolStatusId, String filePath) {
+    public SymbolBuilderWithFile(Long symbolStatusId, String symbolDataPath) {
         this.symbolStatusId = symbolStatusId;
-        this.filePath = filePath;
-        this.csvParser = new CSVParser(symbolStatusId, filePath);
+        this.symbolDataPath = symbolDataPath;
+        this.csvParser = new CSVParser(symbolStatusId, symbolDataPath);
     }
 
     @Override

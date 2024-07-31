@@ -14,16 +14,16 @@ import org.slf4j.LoggerFactory;
 public class SaveAsSymbol {
     private final Logger logger = LoggerFactory.getLogger(SaveAsSymbol.class);
 
-    public SymbolStatusDTO saveAsSymbol(String projName, String projectPath, String resultPath) throws Exception {
+    public SymbolStatusDTO saveAsSymbol(String projName, String projectPath, String resultPath, String fileType) throws Exception {
         SymbolStatusDTO symbolStatusDTO = new SymbolStatusDTO(1L, 1L, null, 1L);
         symbolStatusDTO.setStatusEnum(SymbolStatusEnum.ON_GOING);
         symbolStatusDTO.setSymbolStatusId(2L);
         try {
             ProjectParser projectParser;
             if (resultPath!=null) {
-                projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, resultPath);
+                projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, resultPath, fileType);
             } else {
-                projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, false);
+                projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, true, fileType);
             }
             projectParser.parseProject();
             symbolStatusDTO.setStatusEnum(SymbolStatusEnum.COMPLETED);
@@ -40,18 +40,18 @@ public class SaveAsSymbol {
         }
     }
 
-    private ProjectParser getProjectParser(Long symbolStatusId, String projectPath, String projectName, Boolean isDependency)
+    private ProjectParser getProjectParser(Long symbolStatusId, String projectPath, String projectName, Boolean isDependency, String fileType)
             throws Exception {
-        SymbolSaver symbolSaver = ParserConfiguration.getFileSymbolSaver(projectPath, projectName, "csv");
+        SymbolSaver symbolSaver = ParserConfiguration.getFileSymbolSaver(projectPath, projectName, fileType);
 
         SymbolBuilder symbolBuilder = ParserConfiguration.getJavaParserSymbolBuilder(symbolStatusId, projectPath, projectName, isDependency);
 
         return ParserConfiguration.getProjectParser(symbolBuilder, symbolSaver);
     }
 
-    private ProjectParser getProjectParser(Long symbolStatusId, String projectPath, String projectName, String resultPath)
+    private ProjectParser getProjectParser(Long symbolStatusId, String projectPath, String projectName, String resultPath, String fileType)
             throws Exception {
-        SymbolSaver symbolSaver = ParserConfiguration.getFileSymbolSaver(projectPath, projectName, "excel");
+        SymbolSaver symbolSaver = ParserConfiguration.getFileSymbolSaver(projectPath, projectName, fileType);
 
         SymbolBuilder symbolBuilder = ParserConfiguration.getFileSymbolBuilder(symbolStatusId, resultPath);
 

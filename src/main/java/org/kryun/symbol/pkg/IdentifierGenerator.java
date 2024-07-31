@@ -23,7 +23,7 @@ public class IdentifierGenerator {
     }
 
     public void removeId() {
-        if (lastId==-1L) {
+        if (lastId.equals(-1L)) {
             throw new IllegalStateException("No id to remove");
         } else {
             cursorId = lastId;

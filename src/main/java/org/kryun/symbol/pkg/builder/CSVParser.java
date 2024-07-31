@@ -7,18 +7,13 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.SuperBuilder;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.kryun.global.enums.symbol.ExpressionRelationEnum;
@@ -47,7 +42,7 @@ public class CSVParser implements SymbolContainer {
     private final Logger logger = LoggerFactory.getLogger(CSVParser.class);
 
     private final Long symbolStatusId;
-    private final String filePath;
+    private final String symbolDataPath;
 
     private final Map<String, Long> symbolIds = new LinkedHashMap<>() {
         {
@@ -178,10 +173,10 @@ public class CSVParser implements SymbolContainer {
 
     public void parseFile() throws Exception {
         try {
-            File dir = new File(filePath);
+            File dir = new File(symbolDataPath);
             String[] fileList = dir.list();
             if (fileList==null || fileList.length==0) {
-                throw new FileNotFoundException("No files in the directory: " + filePath);
+                throw new FileNotFoundException("No files in the directory: " + symbolDataPath);
             }
 
             for (String fileName : fileList) {
@@ -198,7 +193,7 @@ public class CSVParser implements SymbolContainer {
 
     public void generateSymbol(Class<?> classType) throws Exception {
         String symbolType = classType.getSimpleName();
-        String dataPath = filePath + "/" + symbolType + ".csv";
+        String dataPath = symbolDataPath + "/" + symbolType + ".csv";
         boolean hasBuilder = hasBuilder(classType);
 
         try (Reader in = new FileReader(dataPath)) {
@@ -270,6 +265,7 @@ public class CSVParser implements SymbolContainer {
 
     private Object createInstanceByBuilder(Class<?> classType, List<String> headerList, CSVRecord record) throws Exception {
         Long lastId = -1L;
+        System.out.println(classType.getName());
         Class<?> builderClass = Class.forName(classType.getName() +"$" +classType.getSimpleName() +"Builder");
         Object builderInstance = classType.getMethod("builder").invoke(null);
         for (int i = 0; i < headerList.size(); i++) {

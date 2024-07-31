@@ -26,6 +26,7 @@ import org.kryun.symbol.javaparser.model.dto.JavaParserParameterDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserReturnMapperDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserStmtVariableDeclarationDTO;
 import org.kryun.symbol.model.dto.FullQualifiedNameDTO;
+import org.kryun.symbol.model.dto.Position;
 import org.kryun.symbol.model.dto.SymbolReferenceDTO;
 import java.sql.Connection;
 import java.util.HashMap;
@@ -33,12 +34,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.kryun.symbol.pkg.LastSymbolDetector;
 import org.kryun.symbol.pkg.builder.interfaces.SymbolContainer;
 
 public class ConvertJavaParserToSymbol implements SymbolContainer {
 
     private final Long symbolStatusId;
     private final Boolean isDependency;
+    private final LastSymbolDetector lastSymbolDetector = new LastSymbolDetector();
     private TypeResolver typeResolver;
 
     private final SymbolReferenceManager symbolReferenceManager = new SymbolReferenceManager();
@@ -48,7 +51,7 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
     private final ClassManager classManager = new ClassManager();
 
     private final VariableManager variableManager = new VariableManager();
-    private final MethodManager methodManager = new MethodManager();
+    private final MethodManager methodManager;
     private final FullQualifiedNameManager fullQualifiedNameManager = new FullQualifiedNameManager();
     private final ExpressionManager expressionManager = new ExpressionManager();
 
@@ -58,12 +61,14 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
         this.isDependency = isDependency;
         this.symbolStatusId = symbolStatusId;
         this.typeResolver = new TypeResolver(symbolStatusId, fullQualifiedNameManager);
+        this.methodManager = new MethodManager(expressionManager, isDependency);
     }
 
     public ConvertJavaParserToSymbol(Long symbolStatusId, Boolean isDependency, Connection conn) {
         this.isDependency = isDependency;
         this.symbolStatusId = symbolStatusId;
         this.typeResolver = new TypeResolver(symbolStatusId, fullQualifiedNameManager, conn);
+        this.methodManager = new MethodManager(expressionManager, isDependency);
     }
 
     public List<SymbolReferenceDTO> getSymbolReferenceDTOList() {
@@ -122,6 +127,10 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
         return expressionManager.getExpressionDTOList();
     }
 
+    public String printLastSymbol() {
+        return lastSymbolDetector.toString();
+    }
+
     public Map<String, Long> getSymbolIds() {
         Map<String, Long> symbolIds = new LinkedHashMap<>();
         symbolIds.putAll(symbolReferenceManager.getIdentifierMap());
@@ -155,6 +164,9 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
         String nodeType = cu.getMetaModel().getTypeName();
         SymbolReferenceDTO symbolReferenceDTO = symbolReferenceManager
                 .buildSymbolReference(symbolStatusId, srcPath);
+
+        lastSymbolDetector.setSrcPath(srcPath);
+
         Long symbolReferenceId = symbolReferenceDTO.getSymbolReferenceId();
         JavaParserBlockDTO rootBlock = blockManager.buildBlock(1, null, nodeType, cu, symbolReferenceId);
 
@@ -181,6 +193,10 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
             javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(), nodeType,
                     node, parentJavaParserBlockDTO.getSymbolReferenceId());
 
+            lastSymbolDetector.setSymbolName(javaParserClassDTO.getName());
+            lastSymbolDetector.setSymbolType("ClassOrInterfaceDeclaration");
+            lastSymbolDetector.setSymbolPostion(javaParserClassDTO.getPosition());
+
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, javaParserClassDTO, typeImportMapper);
 
         } else if (nodeType.equals("EnumDeclaration")) {
@@ -188,6 +204,10 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
 
             javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(), nodeType,
                     node, parentJavaParserBlockDTO.getSymbolReferenceId());
+
+            lastSymbolDetector.setSymbolName(enumDTO.getName());
+            lastSymbolDetector.setSymbolType("EnumDeclaration");
+            lastSymbolDetector.setSymbolPostion(enumDTO.getPosition());
 
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, enumDTO, typeImportMapper);
 
@@ -260,6 +280,11 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
                     belongedJavaParserClassDTO.getClassId(), node, expressionManager);
 
             JavaParserMemberVariableDeclarationDTO firstMvdDTO = mvdDtoList.get(0);
+
+            lastSymbolDetector.setSymbolName(firstMvdDTO.getName());
+            lastSymbolDetector.setSymbolType("FieldDeclaration");
+            lastSymbolDetector.setSymbolPostion(firstMvdDTO.getPosition());
+
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, firstMvdDTO, typeImportMapper);
             if(mvdDtoList.size() > 1 && firstMvdDTO.getFullQualifiedNameId() != null) {
                 for (int i = 1; i < mvdDtoList.size(); i++) {
@@ -274,6 +299,11 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
         else if (nodeType.equals("VariableDeclarationExpr")) {
             List<JavaParserStmtVariableDeclarationDTO> stmtDtoList = variableManager.buildVariableDeclInMethod(javaParserBlockDTO, node, expressionManager);
             JavaParserStmtVariableDeclarationDTO firstStmtDTO = stmtDtoList.get(0);
+
+            lastSymbolDetector.setSymbolName(firstStmtDTO.getName());
+            lastSymbolDetector.setSymbolType("VariableDeclarationExpr");
+            lastSymbolDetector.setSymbolPostion(firstStmtDTO.getPosition());
+
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, firstStmtDTO, typeImportMapper);
             if(stmtDtoList.size() > 1 && firstStmtDTO.getFullQualifiedNameId() != null) {
                 for (int i = 1; i < stmtDtoList.size(); i++) {
@@ -292,10 +322,19 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
                     .get(classManager.getClassDTOList().size() - 1);
             JavaParserMethodDeclarationDTO mdDto = methodManager.buildMethodDeclaration(javaParserBlockDTO, belongedJavaParserClassDTO.getClassId(),
                     node);
+
+            lastSymbolDetector.setSymbolName(mdDto.getName());
+            lastSymbolDetector.setSymbolType("MethodDeclaration");
+            lastSymbolDetector.setSymbolPostion(mdDto.getPosition());
+
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, mdDto, typeImportMapper);
 
         } else if (nodeType.equals("MethodCallExpr")) {
-            JavaParserMethodCallExprDTO mceDto = methodManager.buildMethodCallExpr(javaParserBlockDTO, node, expressionManager);
+            JavaParserMethodCallExprDTO mceDto = methodManager.buildMethodCallExpr(javaParserBlockDTO, node);
+            lastSymbolDetector.setSymbolName(mceDto.getName());
+            lastSymbolDetector.setSymbolType("MethodCallExpr");
+            lastSymbolDetector.setSymbolPostion(mceDto.getPosition());
+
             if (!isDependency) {
                 // Dependency가 아닌 경우에만 동작
                 typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, mceDto, typeImportMapper);
@@ -307,6 +346,10 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
                     javaParserBlockDTO.getBlockId(), (Expression) node);
         } else if (nodeType.equals("ObjectCreationExpr")) {
             ObjectCreationExpr objectCreationExpr = (ObjectCreationExpr) node;
+
+            lastSymbolDetector.setSymbolType("ObjectCreationExpr");
+            lastSymbolDetector.setSymbolPostion(new Position(node.getRange().get().begin.line, node.getRange().get().begin.column, node.getRange().get().end.line, node.getRange().get().end.column));
+
             // 내부에 초기화 블록이 존재할 때만 생성하도록 추가
             if (objectCreationExpr.getAnonymousClassBody().isPresent()) {
                 expressionManager.buildExpressionRecursively(null, null,

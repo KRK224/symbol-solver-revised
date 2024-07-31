@@ -13,6 +13,11 @@ public class ProjectParser {
     public void parseProject() throws Exception {
         SymbolContainer symbolContainer  = symbolBuilder.build();
         symbolSaver.save(symbolContainer);
+        symbolContainer.clear();
+    }
+
+    public String getSymbolSaverInfo() {
+        return symbolSaver.getInfo();
     }
 
 }

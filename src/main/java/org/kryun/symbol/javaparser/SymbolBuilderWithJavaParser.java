@@ -5,7 +5,9 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.symbolsolver.utils.SymbolSolverCollectionStrategy;
 import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
+import java.util.Comparator;
 import org.kryun.global.enums.symbol.SymbolStatusEnum;
+import org.kryun.global.utils.FileUtil;
 import org.kryun.symbol.javaparser.model.exception.SaveSymbolException;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -64,6 +66,8 @@ public class SymbolBuilderWithJavaParser implements SymbolBuilder {
         } catch (Exception e) {
             logger.error("Error in SymbolBuilderWithJavaParser.build()", e);
             throw new SaveSymbolException(SymbolStatusEnum.UNAVAILAbLE, e.getMessage(), "Error in SymbolBuilderWithJavaParser.build()");
+        } finally {
+            convertJavaParserToSymbol.printLastSymbol();
         }
     }
 
