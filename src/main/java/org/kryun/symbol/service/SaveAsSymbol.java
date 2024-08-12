@@ -35,7 +35,6 @@ public class SaveAsSymbol {
             symbolStatusDTO.setUpdatedTime(new Timestamp(System.currentTimeMillis()));
             symbolStatusDTO.setStatusEnum(errorStatus);
 
-
             return symbolStatusDTO;
         }
     }

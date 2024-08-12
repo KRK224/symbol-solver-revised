@@ -2,8 +2,18 @@ package org.kryun.symbol.javaparser;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
+import com.github.javaparser.ast.expr.VariableDeclarationExpr;
+import com.github.javaparser.ast.stmt.DoStmt;
+import com.github.javaparser.ast.stmt.ForEachStmt;
+import com.github.javaparser.ast.stmt.ForStmt;
+import com.github.javaparser.ast.stmt.IfStmt;
+import com.github.javaparser.ast.stmt.Statement;
+import com.github.javaparser.ast.stmt.SwitchEntry;
+import com.github.javaparser.ast.stmt.SwitchStmt;
+import com.github.javaparser.ast.stmt.WhileStmt;
 import org.kryun.symbol.javaparser.management.BlockManager;
 import org.kryun.symbol.javaparser.management.ClassManager;
 import org.kryun.symbol.javaparser.management.ExpressionManager;
@@ -188,39 +198,31 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
                 typeImportMapper.put(javaParserImportDTO.getClassName(), javaParserImportDTO);
             }
         } else if (nodeType.equals("ClassOrInterfaceDeclaration")) {
-            JavaParserClassDTO javaParserClassDTO = classManager.buildClass(javaParserBlockDTO, packageManager.getLastId(), node);
+            JavaParserClassDTO javaParserClassDTO = classManager.buildClass(javaParserBlockDTO, getCurrentPackageId(), node);
 
             javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(), nodeType,
                     node, parentJavaParserBlockDTO.getSymbolReferenceId());
 
-            lastSymbolDetector.setSymbolName(javaParserClassDTO.getName());
-            lastSymbolDetector.setSymbolType("ClassOrInterfaceDeclaration");
-            lastSymbolDetector.setSymbolPostion(javaParserClassDTO.getPosition());
+            lastSymbolDetector.saveLastSymbol("ClassOrInterfaceDeclaration", javaParserClassDTO.getName(), javaParserClassDTO.getPosition());
 
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, javaParserClassDTO, typeImportMapper);
 
         } else if (nodeType.equals("EnumDeclaration")) {
-            JavaParserClassDTO enumDTO = classManager.buildEnum(javaParserBlockDTO, packageManager.getLastId(), node);
+            JavaParserClassDTO enumDTO = classManager.buildEnum(javaParserBlockDTO, getCurrentPackageId(), node);
 
             javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(), nodeType,
                     node, parentJavaParserBlockDTO.getSymbolReferenceId());
 
-            lastSymbolDetector.setSymbolName(enumDTO.getName());
-            lastSymbolDetector.setSymbolType("EnumDeclaration");
-            lastSymbolDetector.setSymbolPostion(enumDTO.getPosition());
+            lastSymbolDetector.saveLastSymbol("EnumDeclaration", enumDTO.getName(), enumDTO.getPosition());
 
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, enumDTO, typeImportMapper);
 
-        } else if (nodeType.equals("AnnotationDeclaration") || nodeType.equals(
-                "RecordDeclaration") || nodeType.equals("SwitchStmt")
-                || nodeType.equals(
-                "SwitchEntry")) {
+        } else if (nodeType.equals("AnnotationDeclaration") || nodeType.equals("RecordDeclaration")) {
             javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(), nodeType,
                     node, parentJavaParserBlockDTO.getSymbolReferenceId());
         } else if (nodeType.equals("BlockStmt")) {
 
             String blockStmtType = nodeType;
-
             Optional<Node> parentNode = node.getParentNode();
             // 부모가 존재하는 경우
             if (parentNode.isPresent()) {
@@ -281,12 +283,10 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
 
             JavaParserMemberVariableDeclarationDTO firstMvdDTO = mvdDtoList.get(0);
 
-            lastSymbolDetector.setSymbolName(firstMvdDTO.getName());
-            lastSymbolDetector.setSymbolType("FieldDeclaration");
-            lastSymbolDetector.setSymbolPostion(firstMvdDTO.getPosition());
+            lastSymbolDetector.saveLastSymbol("FieldDeclaration", firstMvdDTO.getName(), firstMvdDTO.getPosition());
 
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, firstMvdDTO, typeImportMapper);
-            if(mvdDtoList.size() > 1 && firstMvdDTO.getFullQualifiedNameId() != null) {
+            if (mvdDtoList.size() > 1 && firstMvdDTO.getFullQualifiedNameId()!=null) {
                 for (int i = 1; i < mvdDtoList.size(); i++) {
                     JavaParserMemberVariableDeclarationDTO mvdDto = mvdDtoList.get(i);
                     mvdDto.setFullQualifiedNameId(firstMvdDTO.getFullQualifiedNameId());
@@ -300,12 +300,10 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
             List<JavaParserStmtVariableDeclarationDTO> stmtDtoList = variableManager.buildVariableDeclInMethod(javaParserBlockDTO, node, expressionManager);
             JavaParserStmtVariableDeclarationDTO firstStmtDTO = stmtDtoList.get(0);
 
-            lastSymbolDetector.setSymbolName(firstStmtDTO.getName());
-            lastSymbolDetector.setSymbolType("VariableDeclarationExpr");
-            lastSymbolDetector.setSymbolPostion(firstStmtDTO.getPosition());
+            lastSymbolDetector.saveLastSymbol("VariableDeclarationExpr", firstStmtDTO.getName(), firstStmtDTO.getPosition());
 
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, firstStmtDTO, typeImportMapper);
-            if(stmtDtoList.size() > 1 && firstStmtDTO.getFullQualifiedNameId() != null) {
+            if (stmtDtoList.size() > 1 && firstStmtDTO.getFullQualifiedNameId()!=null) {
                 for (int i = 1; i < stmtDtoList.size(); i++) {
                     JavaParserStmtVariableDeclarationDTO stmtDto = stmtDtoList.get(i);
                     stmtDto.setFullQualifiedNameId(firstStmtDTO.getFullQualifiedNameId());
@@ -313,8 +311,7 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
                 }
             }
 
-        } else if (nodeType.equals("MethodDeclaration") || nodeType.equals(
-                "ConstructorDeclaration")) {
+        } else if (nodeType.equals("MethodDeclaration") || nodeType.equals("ConstructorDeclaration")) {
             // 내부에 BlockStmt 가 존재하여 별도의 Block 을 생성하지는 않음
 
             // 함수 및 생성자 선언 시 build
@@ -323,17 +320,14 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
             JavaParserMethodDeclarationDTO mdDto = methodManager.buildMethodDeclaration(javaParserBlockDTO, belongedJavaParserClassDTO.getClassId(),
                     node);
 
-            lastSymbolDetector.setSymbolName(mdDto.getName());
-            lastSymbolDetector.setSymbolType("MethodDeclaration");
-            lastSymbolDetector.setSymbolPostion(mdDto.getPosition());
+            lastSymbolDetector.saveLastSymbol("MethodDeclaration", mdDto.getName(), mdDto.getPosition());
 
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, mdDto, typeImportMapper);
 
         } else if (nodeType.equals("MethodCallExpr")) {
             JavaParserMethodCallExprDTO mceDto = methodManager.buildMethodCallExpr(javaParserBlockDTO, node);
-            lastSymbolDetector.setSymbolName(mceDto.getName());
-            lastSymbolDetector.setSymbolType("MethodCallExpr");
-            lastSymbolDetector.setSymbolPostion(mceDto.getPosition());
+
+            lastSymbolDetector.saveLastSymbol("MethodCallExpr", mceDto.getName(), mceDto.getPosition());
 
             if (!isDependency) {
                 // Dependency가 아닌 경우에만 동작
@@ -347,8 +341,7 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
         } else if (nodeType.equals("ObjectCreationExpr")) {
             ObjectCreationExpr objectCreationExpr = (ObjectCreationExpr) node;
 
-            lastSymbolDetector.setSymbolType("ObjectCreationExpr");
-            lastSymbolDetector.setSymbolPostion(new Position(node.getRange().get().begin.line, node.getRange().get().begin.column, node.getRange().get().end.line, node.getRange().get().end.column));
+            lastSymbolDetector.saveLastSymbol("ObjectCreationExpr", objectCreationExpr.getTypeAsString(), new Position(node.getRange().get().begin.line, node.getRange().get().begin.column, node.getRange().get().end.line, node.getRange().get().end.column));
 
             // 내부에 초기화 블록이 존재할 때만 생성하도록 추가
             if (objectCreationExpr.getAnonymousClassBody().isPresent()) {
@@ -357,6 +350,51 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
                 javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(),
                         nodeType, node, parentJavaParserBlockDTO.getSymbolReferenceId());
             }
+        } else if (nodeType.equals("IfStmt")) {
+            System.out.println("Debugging - IfStmt");
+            IfStmt ifStmtNode = (IfStmt) node;
+            Statement thenStmt = ifStmtNode.getThenStmt();
+            if (!thenStmt.isBlockStmt()) {
+                String typeName = thenStmt.getMetaModel().getTypeName();
+                System.out.println("Debugging - ThenStmt Type: " + typeName);
+            }
+            Optional<Statement> elseStmt = ifStmtNode.getElseStmt();
+            if (elseStmt.isPresent() && elseStmt.get().isIfStmt()) {
+                System.out.println("Debugging - ElseStmt is IfStmt");
+            }
+        } else if (nodeType.equals("SwitchStmt")) {
+            System.out.println("Debugging - SwitchStmt");
+            SwitchStmt switchStmt = (SwitchStmt) node;
+            NodeList<SwitchEntry> entries = switchStmt.getEntries();
+            for (SwitchEntry entry : entries) {
+                System.out.println("Debugging - SwitchEntry");
+                // entry 의 label은 Expression
+                NodeList<Expression> labels = entry.getLabels();
+                NodeList<Statement> statements = entry.getStatements();
+                for (Statement statement : statements) {
+                    System.out.println("Debugging - Statement");
+                }
+            }
+        } else if (nodeType.equals("ForStmt")) {
+            ForStmt forStmt = (ForStmt) node;
+            Statement body = forStmt.getBody();
+            NodeList<Expression> initialization = forStmt.getInitialization();
+            NodeList<Expression> update = forStmt.getUpdate();
+            Optional<Expression> compare = forStmt.getCompare();
+        } else if (nodeType.equals("ForEachStmt")) {
+            ForEachStmt forEachStmt = (ForEachStmt) node;
+            Statement body = forEachStmt.getBody();
+            Expression iterable = forEachStmt.getIterable();
+            VariableDeclarationExpr variable = forEachStmt.getVariable();
+        } else if (nodeType.equals("WhileStmt")) {
+            WhileStmt whileStmt = (WhileStmt) node;
+            // body는 block일 수도 있고 아닐 수도 있다.. => while_stmt_body type으로 생성할 것
+            Statement body = whileStmt.getBody();
+            Expression condition = whileStmt.getCondition();
+        } else if (nodeType.equals("DoStmt")) {
+            DoStmt doStmt = (DoStmt) node;
+            Statement body = doStmt.getBody();
+            Expression condition = doStmt.getCondition();
         }
 
         expressionManager.deleteExpressionDTO(node.hashCode());
@@ -368,5 +406,11 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
                 visitAndBuild(childNode, javaParserBlockDTO, isDependency, typeImportMapper);
             }
         }
+    }
+
+    // 현재 package 선언문이 존재하지 않는 경우, DB의 이미 저장된 NULL의 ID -100L 반환
+    // *** identifier 자체를 수정하면 에러 발생! ***
+    private long getCurrentPackageId() {
+        return hasPackage ? packageManager.getLastId():-100L;
     }
 }

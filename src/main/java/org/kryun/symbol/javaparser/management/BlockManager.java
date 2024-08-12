@@ -1,6 +1,7 @@
 package org.kryun.symbol.javaparser.management;
 
 import com.github.javaparser.ast.Node;
+import java.util.Optional;
 import org.kryun.symbol.javaparser.model.dto.JavaParserBlockDTO;
 import org.kryun.symbol.model.dto.Position;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class BlockManager {
         return identifierMap;
     }
 
-    // Todo. Node 필드 필요 여부 파악
+
     public JavaParserBlockDTO buildBlock(Integer depth, Long ParentBlockId, String blockType, Node node, Long symbolReferenceId) {
         try {
             JavaParserBlockDTO javaParserBlockDTO = new JavaParserBlockDTO();
