@@ -12,6 +12,7 @@ public class MethodDeclarationDTO implements FQNReferable {
 
     private Long methodDeclId;
     private Long blockId;
+    private Long ownBlockId;
     private Long belongedClassId;
     private Long fullQualifiedNameId;
     private Boolean isFullQualifiedNameIdFromDB = false;
@@ -25,6 +26,7 @@ public class MethodDeclarationDTO implements FQNReferable {
         return "MethodDeclarationDTO{" +
                 "methodDeclarationId: " + methodDeclId +
                 ", blockId: " + blockId +
+                ", ownBlockId: " + ownBlockId +
                 ", belongedClassId: " + belongedClassId +
                 ", fullQualifiedNameId : " + fullQualifiedNameId +
                 ", isFullQualifiedNameIdFromDB : " + isFullQualifiedNameIdFromDB +

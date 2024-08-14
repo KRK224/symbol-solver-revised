@@ -6,6 +6,7 @@ import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import java.util.logging.Logger;
 import org.kryun.symbol.javaparser.model.dto.JavaParserBlockDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserClassDTO;
 import org.kryun.symbol.model.dto.Position;
@@ -17,6 +18,8 @@ import java.util.stream.Collectors;
 import org.kryun.symbol.pkg.IdentifierGenerator;
 
 public class ClassManager {
+
+    private final java.util.logging.Logger logger = Logger.getLogger(BlockManager.class.getName());
 
     private final List<JavaParserClassDTO> javaParserClassDTOList;
 
@@ -84,16 +87,14 @@ public class ClassManager {
             isImplemented = true;
 
             List<String> implementClassList = implementedTypes.stream()
-                    .map(classOrInterfaceTypeNode -> classOrInterfaceTypeNode.toString())
-                    .collect(Collectors.toList());
+                    .map(ClassOrInterfaceType::toString).toList();
             implementExtendClassList.addAll(implementClassList);
         }
 
         if (!extendedTypes.isEmpty()) {
             isImplemented = true;
             List<String> extendsClassList = extendedTypes.stream()
-                    .map(classOrInterfaceType -> classOrInterfaceType.toString()).collect(
-                            Collectors.toList());
+                    .map(ClassOrInterfaceType::toString).toList();
             implementExtendClassList.addAll(extendsClassList);
         }
         implementClass = String.join(", ", implementExtendClassList);
@@ -107,6 +108,7 @@ public class ClassManager {
 
         javaParserClassDTO.setClassId(classIdGenerator.nextId());
         javaParserClassDTO.setBlockId(blockId);
+//        javaParserClassDTO.setOwnBlockProperties(ownBlock);
         javaParserClassDTO.setPackageId(packageId);
         javaParserClassDTO.setName(className);
         javaParserClassDTO.setModifier(modifierKeyword);
@@ -180,6 +182,7 @@ public class ClassManager {
 
         javaParserClassDTO.setClassId(classIdGenerator.nextId());
         javaParserClassDTO.setBlockId(blockId);
+//        javaParserClassDTO.setOwnBlockProperties(ownBlock);
         javaParserClassDTO.setPackageId(packageId);
         javaParserClassDTO.setName(className);
         javaParserClassDTO.setModifier(modifierKeyword);
@@ -200,5 +203,21 @@ public class ClassManager {
         javaParserClassDTOList.add(javaParserClassDTO);
 
         return javaParserClassDTO;
+    }
+
+    public JavaParserClassDTO findClassDTOByBlock(JavaParserBlockDTO blockDTO) {
+        for (int i = javaParserClassDTOList.size() - 1; i >= 0; i--) {
+            JavaParserClassDTO classDTO = javaParserClassDTOList.get(i);
+            if (classDTO.getOwnBlock().equals(blockDTO)) {
+                return classDTO;
+            }
+            // 현재 파일을 벗어난 것으로 간주
+            if (!classDTO.getOwnBlock().getSymbolReferenceId().equals(blockDTO.getSymbolReferenceId())) {
+                break;
+            }
+        }
+        // Todo. 못찾아서 마지막 class를 반환하는 경우 있나 검증 필요
+        logger.warning("cannot find classDTO by block:: " + blockDTO.toString());
+        return javaParserClassDTOList.get(javaParserClassDTOList.size() - 1);
     }
 }

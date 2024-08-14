@@ -166,6 +166,7 @@ public class MethodManager {
 
         javaParserMethodDeclarationDTO.setMethodDeclId(methodDeclarationId);
         javaParserMethodDeclarationDTO.setBlockId(blockId);
+//        javaParserMethodDeclarationDTO.setOwnBlockProperties(ownBlock);
         javaParserMethodDeclarationDTO.setBelongedClassId(belongedClassId);
         javaParserMethodDeclarationDTO.setName(methodName);
         javaParserMethodDeclarationDTO.setModifier(modifierKeyword);
@@ -174,7 +175,6 @@ public class MethodManager {
         javaParserMethodDeclarationDTO.setReturnMapper(javaParserReturnMapperDTO);
         javaParserMethodDeclarationDTO.setParameters(localJavaParserParameterDTOList);
 
-        javaParserMethodDeclarationDTO.setNode(node);
         javaParserMethodDeclarationDTO.setPosition(
                 new Position(
                         node.getRange().get().begin.line,

@@ -16,6 +16,7 @@ public class ClassDTO implements FQNReferable {
     private String modifier;
     private String accessModifier;
     private Long blockId;
+    private Long ownBlockId;
     private String type;
     private Boolean isImplemented = false;
     private String implementClass;
@@ -30,6 +31,7 @@ public class ClassDTO implements FQNReferable {
                 "classId : " + classId +
                 ", packageId : " + packageId +
                 ", blockId : " + blockId +
+                ", ownBlockId : " + ownBlockId +
                 ", fullQualifiedNameId : " + fullQualifiedNameId +
                 ", isFullQualifiedNameIdFromDB : " + isFullQualifiedNameIdFromDB +
                 ", name : '" + name + '\'' +

@@ -56,6 +56,9 @@ public class SymbolBuilderWithJavaParser implements SymbolBuilder {
                         String fileName = cu.getStorage().get().getPath().toString();
                         String srcPath = fileName.replace(projectPath + "/", "");
                         logger.info("fileName:" + fileName);
+                        if (srcPath.endsWith("Testcode.java")) {
+                            System.out.println("fileName is Testcode");
+                        }
                         convertJavaParserToSymbol.visit(cu, srcPath);
 
                     }

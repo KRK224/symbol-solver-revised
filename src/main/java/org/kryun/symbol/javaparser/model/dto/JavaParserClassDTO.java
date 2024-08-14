@@ -1,9 +1,20 @@
 package org.kryun.symbol.javaparser.model.dto;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.kryun.symbol.model.dto.ClassDTO;
 
+
+@Getter
 public class JavaParserClassDTO extends ClassDTO {
 
+    // toString에 넣지 말 것
+    private JavaParserBlockDTO ownBlock;
+
+    public void setOwnBlockProperties(JavaParserBlockDTO ownBlock) {
+        this.ownBlock = ownBlock;
+        this.setOwnBlockId(ownBlock.getBlockId());
+    }
 
     @Override
     public String toString() {

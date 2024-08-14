@@ -2,7 +2,9 @@ package org.kryun.symbol.javaparser.management;
 
 import com.github.javaparser.ast.Node;
 import java.util.Optional;
+import java.util.logging.Logger;
 import org.kryun.symbol.javaparser.model.dto.JavaParserBlockDTO;
+import org.kryun.symbol.model.dto.BlockDTO;
 import org.kryun.symbol.model.dto.Position;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,6 +13,8 @@ import java.util.Map;
 import org.kryun.symbol.pkg.IdentifierGenerator;
 
 public class BlockManager {
+
+    private final Logger logger = Logger.getLogger(BlockManager.class.getName());
 
     private final List<JavaParserBlockDTO> javaParserBlockDTOList;
 
@@ -50,56 +54,13 @@ public class BlockManager {
                 throw new Exception("Node range is not present");
             }
 
-            if (blockType.equals("IfStmt")) {
-                javaParserBlockDTO.setPosition(
-                        node.getParentNode()
-                                .map(n -> new Position(
-                                        n.getRange().get().begin.line,
-                                        n.getRange().get().begin.column,
-                                        node.getRange().get().end.line,
-                                        node.getRange().get().end.column))
-                                .orElse(
-                                        new Position(
-                                                node.getRange().get().begin.line,
-                                                node.getRange().get().begin.column,
-                                                node.getRange().get().end.line,
-                                                node.getRange().get().end.column)));
-            } else {
-                javaParserBlockDTO.setPosition(
-                        new Position(
-                                node.getRange().get().begin.line,
-                                node.getRange().get().begin.column,
-                                node.getRange().get().end.line,
-                                node.getRange().get().end.column));
-            }
-
-            javaParserBlockDTO.setBracketPosition(
+            javaParserBlockDTO.setPosition(
                     new Position(
                             node.getRange().get().begin.line,
                             node.getRange().get().begin.column,
                             node.getRange().get().end.line,
                             node.getRange().get().end.column));
-
-            if (blockType.equals("SwitchEntry")) {
-                node.getChildNodes().stream()
-                        .filter(n -> n.getMetaModel().getTypeName().equals("BlockStmt"))
-                        .findAny().ifPresentOrElse(blockStmt -> javaParserBlockDTO.setBracketPosition(
-                                        new Position(
-                                                blockStmt.getRange().isPresent() ? blockStmt.getRange().get().begin.line
-                                                        :node.getRange().get().begin.line,
-                                                blockStmt.getRange().isPresent() ? blockStmt.getRange().get().begin.column
-                                                        :node.getRange().get().begin.column,
-                                                blockStmt.getRange().isPresent() ? blockStmt.getRange().get().end.line
-                                                        :node.getRange().get().end.line,
-                                                blockStmt.getRange().isPresent() ? blockStmt.getRange().get().end.column
-                                                        :node.getRange().get().end.column)),
-                                () -> javaParserBlockDTO.setBracketPosition(new Position(0, 0, 0, 0)));
-            }
-
-            if (node.getMetaModel().getTypeName().equals("ExpressionStmt")) {
-                javaParserBlockDTO.setBracketPosition(new Position(0, 0, 0, 0));
-            }
-
+            
             javaParserBlockDTOList.add(javaParserBlockDTO);
 
             return javaParserBlockDTO;
@@ -107,6 +68,27 @@ public class BlockManager {
             System.out.println(e.getMessage());
             return javaParserBlockDTOList.get(javaParserBlockDTOList.size() - 1);
         }
+    }
 
+    public JavaParserBlockDTO findParentBlock(Node node) {
+        // BlockDTO의 Node는 BlockStmt가 아닐 수 있음
+        Optional<Node> parentNode = node.getParentNode();
+        if (parentNode.isPresent()) {
+            Node parent = parentNode.get();
+            // 가장 최신 blockDTO 부터 조회
+            for (int i = javaParserBlockDTOList.size() - 1; i >= 0; i--) {
+                JavaParserBlockDTO block = javaParserBlockDTOList.get(i);
+                if (block.getNode().equals(parent)) {
+                    return block;
+                }
+                // 현재 파일을 벗어났다고 판단, !!! CompilationUnit block 생성 시에는 호출 하지 말것 !!!
+                if (block.getBlockType().equals("CompilationUnit")) {
+                    break;
+                }
+            }
+        }
+        // Todo. 이 케이스가 존재하는지 반드시 확인 필요...
+        logger.warning("Parent block not found, return last one:: " + node.getMetaModel().getTypeName());
+        return javaParserBlockDTOList.get(javaParserBlockDTOList.size() - 1);
     }
 }
