@@ -23,7 +23,7 @@ public class SaveAsSymbol {
             if (resultPath!=null) {
                 projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, resultPath, fileType);
             } else {
-                projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, true, fileType);
+                projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, false, fileType);
             }
             projectParser.parseProject();
             symbolStatusDTO.setStatusEnum(SymbolStatusEnum.COMPLETED);

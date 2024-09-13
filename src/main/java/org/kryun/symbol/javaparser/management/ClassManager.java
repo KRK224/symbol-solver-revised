@@ -5,8 +5,9 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
+import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.nodeTypes.NodeWithImplements;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import java.util.logging.Logger;
 import org.kryun.symbol.javaparser.model.dto.JavaParserBlockDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserClassDTO;
 import org.kryun.symbol.model.dto.Position;
@@ -16,14 +17,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.kryun.symbol.pkg.IdentifierGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClassManager {
 
-    private final java.util.logging.Logger logger = Logger.getLogger(BlockManager.class.getName());
+    private final Logger logger = LoggerFactory.getLogger(BlockManager.class.getName());
 
     private final List<JavaParserClassDTO> javaParserClassDTOList;
+    private final BlockManager blockManager;
 
-    public ClassManager() {
+    public ClassManager(BlockManager blockManager) {
+        this.blockManager = blockManager;
         this.javaParserClassDTOList = new ArrayList<>();
     }
 
@@ -43,162 +48,80 @@ public class ClassManager {
         return identifierMap;
     }
 
-
-    public JavaParserClassDTO buildClass(JavaParserBlockDTO javaParserBlockDTO, Long packageId, Node node) {
-        JavaParserClassDTO javaParserClassDTO = new JavaParserClassDTO();
-        Long blockId = javaParserBlockDTO.getBlockId();
-
+    public JavaParserClassDTO buildClassOrEnum(JavaParserBlockDTO parentBlockDTO, Long packageId, Node node) {
         boolean isInner = false;
+        String className;
         String outerClassName = "";
-
-        if (javaParserBlockDTO.getBlockType().equals("ClassOrInterfaceDeclaration") || javaParserBlockDTO.getBlockType()
-                .equals("EnumDeclaration")) {
-            isInner = true;
-            outerClassName = javaParserClassDTOList.get(javaParserClassDTOList.size() - 1).getName();
-        }
-
-        ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) node;
-        boolean isImplemented = false;
-        String implementClass = "";
-        String modifierKeyword = "";
-        String accessModifierKeyword = "";
-        String className = classOrInterfaceDeclaration.getNameAsString();
         String classType;
-
-        NodeList<Modifier> modifiers = classOrInterfaceDeclaration.getModifiers();
-        for (Modifier modifier : modifiers) {
-            // 접근 제어자 분별
-            if (modifier.getKeyword().equals(Modifier.Keyword.DEFAULT) ||
-                    modifier.getKeyword().equals(Modifier.Keyword.PUBLIC) ||
-                    modifier.getKeyword().equals(Modifier.Keyword.PROTECTED) ||
-                    modifier.getKeyword().equals(Modifier.Keyword.PRIVATE)) {
-                accessModifierKeyword = modifier.getKeyword().asString();
-            } else {
-                modifierKeyword = modifier.getKeyword().asString();
-            }
-        }
-
-        // 인터페이스 구현체 여부
-        NodeList<ClassOrInterfaceType> implementedTypes = classOrInterfaceDeclaration.getImplementedTypes();
-        NodeList<ClassOrInterfaceType> extendedTypes = classOrInterfaceDeclaration.getExtendedTypes();
+        boolean isImplemented = false;
+        List<String> modifierList = new ArrayList<>();
+        List<String> accessModifierList = new ArrayList<>();
         List<String> implementExtendClassList = new ArrayList<>();
 
-        if (!implementedTypes.isEmpty()) {
-            isImplemented = true;
 
-            List<String> implementClassList = implementedTypes.stream()
-                    .map(ClassOrInterfaceType::toString).toList();
-            implementExtendClassList.addAll(implementClassList);
-        }
-
-        if (!extendedTypes.isEmpty()) {
-            isImplemented = true;
-            List<String> extendsClassList = extendedTypes.stream()
-                    .map(ClassOrInterfaceType::toString).toList();
-            implementExtendClassList.addAll(extendsClassList);
-        }
-        implementClass = String.join(", ", implementExtendClassList);
-
-        // 인터페이스 클래스 여부
-        if (classOrInterfaceDeclaration.isInterface()) {
-            classType = "interface";
-        } else {
-            classType = "class";
-        }
-
-        javaParserClassDTO.setClassId(classIdGenerator.nextId());
-        javaParserClassDTO.setBlockId(blockId);
-//        javaParserClassDTO.setOwnBlockProperties(ownBlock);
-        javaParserClassDTO.setPackageId(packageId);
-        javaParserClassDTO.setName(className);
-        javaParserClassDTO.setModifier(modifierKeyword);
-        javaParserClassDTO.setAccessModifier(accessModifierKeyword);
-        javaParserClassDTO.setType(classType);
-        javaParserClassDTO.setIsImplemented(isImplemented);
-        javaParserClassDTO.setImplementClass(implementClass);
-        javaParserClassDTO.setPosition(
-                new Position(
-                        node.getRange().get().begin.line,
-                        node.getRange().get().begin.column,
-                        node.getRange().get().end.line,
-                        node.getRange().get().end.column));
-
-        // Todo. Class 간에 관계(상속, 구현, Inner)를 위한 Table을 따로 생성할 것
-        javaParserClassDTO.setIsInner(isInner);
-        javaParserClassDTO.setOuterClass(outerClassName);
-
-        javaParserClassDTOList.add(javaParserClassDTO);
-
-        return javaParserClassDTO;
-    }
-
-    public JavaParserClassDTO buildEnum(JavaParserBlockDTO javaParserBlockDTO, Long packageId, Node node) {
-        JavaParserClassDTO javaParserClassDTO = new JavaParserClassDTO();
-        Long blockId = javaParserBlockDTO.getBlockId();
-        boolean isInner = false;
-        String outerClassName = "";
-
-        if (javaParserBlockDTO.getBlockType().equals("ClassOrInterfaceDeclaration") || javaParserBlockDTO.getBlockType()
-                .equals("EnumDeclaration")) {
+        if (parentBlockDTO.getBlockType().equals("ClassOrInterfaceDeclaration") || parentBlockDTO.getBlockType().equals("EnumDeclaration")) {
             isInner = true;
-            outerClassName = javaParserClassDTOList.get(javaParserClassDTOList.size() - 1).getName();
+            outerClassName = findClassDTOByBlock(parentBlockDTO).getName();
         }
 
-        EnumDeclaration enumDeclaration = (EnumDeclaration) node;
-        boolean isImplemented = false;
-        String implementClass = "";
-        String modifierKeyword = "";
-        String accessModifierKeyword = "";
-        String className = enumDeclaration.getNameAsString();
+        TypeDeclaration<?> typeDeclaration = (TypeDeclaration<?>) node;
 
-        NodeList<Modifier> modifiers = enumDeclaration.getModifiers();
-        for (Modifier modifier : modifiers) {
-            // 접근 제어자 분별
+        className = typeDeclaration.getNameAsString();
+
+        NodeList<Modifier> modifiers = typeDeclaration.getModifiers();
+        modifiers.forEach(modifier -> {
             if (modifier.getKeyword().equals(Modifier.Keyword.DEFAULT) ||
                     modifier.getKeyword().equals(Modifier.Keyword.PUBLIC) ||
                     modifier.getKeyword().equals(Modifier.Keyword.PROTECTED) ||
                     modifier.getKeyword().equals(Modifier.Keyword.PRIVATE)) {
-                accessModifierKeyword = modifier.getKeyword().asString();
+                accessModifierList.add(modifier.getKeyword().asString());
             } else {
-                modifierKeyword = modifier.getKeyword().asString();
+                modifierList.add(modifier.getKeyword().asString());
             }
+        });
+
+        NodeWithImplements<?> nodeWithImplements = (NodeWithImplements<?>) node;
+        nodeWithImplements.getImplementedTypes().forEach(classOrInterfaceType -> {
+            implementExtendClassList.add(classOrInterfaceType.toString());
+        });
+
+        if (node instanceof ClassOrInterfaceDeclaration) {
+            ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) node;
+            if (classOrInterfaceDeclaration.isInterface()) {
+                classType = "interface";
+            } else {
+                classType = "class";
+            }
+
+            classOrInterfaceDeclaration.getExtendedTypes().forEach(classOrInterfaceType -> {
+                implementExtendClassList.add(classOrInterfaceType.toString());
+            });
+
+        } else {
+            classType = "enum";
         }
 
-        // NodeList<EnumConstantDeclaration> enumConstantDeclarations =
-        // enumDeclaration.getEntries();
-
-        // 인터페이스 구현체 여부
-        NodeList<ClassOrInterfaceType> implementedTypes = enumDeclaration.getImplementedTypes();
-
-        if (!implementedTypes.isEmpty()) {
+        if (!implementExtendClassList.isEmpty()) {
             isImplemented = true;
-
-            List<String> implementClassList = implementedTypes.stream()
-                    .map(classOrInterfaceTypeNode -> classOrInterfaceTypeNode.toString())
-                    .collect(Collectors.toList());
-
-            implementClass = String.join(", ", implementClassList);
         }
 
-        javaParserClassDTO.setClassId(classIdGenerator.nextId());
-        javaParserClassDTO.setBlockId(blockId);
-//        javaParserClassDTO.setOwnBlockProperties(ownBlock);
-        javaParserClassDTO.setPackageId(packageId);
-        javaParserClassDTO.setName(className);
-        javaParserClassDTO.setModifier(modifierKeyword);
-        javaParserClassDTO.setAccessModifier(accessModifierKeyword);
-        // enumConstantDeclarations 를 class dto 에 넣을 만한 멤버 변수가 필요함.
-        javaParserClassDTO.setType("enum");
-        javaParserClassDTO.setIsImplemented(isImplemented);
-        javaParserClassDTO.setImplementClass(implementClass);
-        javaParserClassDTO.setPosition(
-                new Position(
-                        node.getRange().get().begin.line,
-                        node.getRange().get().begin.column,
-                        node.getRange().get().end.line,
-                        node.getRange().get().end.column));
-        javaParserClassDTO.setIsInner(isInner);
-        javaParserClassDTO.setOuterClass(outerClassName);
+
+        JavaParserClassDTO javaParserClassDTO = JavaParserClassDTO.builder()
+                .classId(classIdGenerator.nextId())
+                .blockId(parentBlockDTO.getBlockId())
+                .packageId(packageId)
+                .name(className)
+                .modifier(String.join(" ", modifierList))
+                .accessModifier(String.join(" ", accessModifierList))
+                .type(classType)
+                .isImplemented(isImplemented)
+                .implementClass(String.join(", ", implementExtendClassList))
+                .position(Position.getPositionByNode(node))
+                .isInner(isInner)
+                .outerClass(outerClassName)
+                .build();
+
+        buildAndSetOwnBlockProperties(javaParserClassDTO, parentBlockDTO, node);
 
         javaParserClassDTOList.add(javaParserClassDTO);
 
@@ -216,8 +139,13 @@ public class ClassManager {
                 break;
             }
         }
-        // Todo. 못찾아서 마지막 class를 반환하는 경우 있나 검증 필요
-        logger.warning("cannot find classDTO by block:: " + blockDTO.toString());
+        // Todo. ObjectCreationExpr 내부의 MethodDeclaration은 부모 class를 찾을 수 없음.
+        logger.warn("cannot find classDTO by block:: " + blockDTO.toString());
         return javaParserClassDTOList.get(javaParserClassDTOList.size() - 1);
+    }
+
+    private void buildAndSetOwnBlockProperties(JavaParserClassDTO javaParserClassDTO, JavaParserBlockDTO parentBlock, Node node) {
+        JavaParserBlockDTO ownBlock = blockManager.buildBlock(parentBlock, node);
+        javaParserClassDTO.setOwnBlockProperties(ownBlock);
     }
 }

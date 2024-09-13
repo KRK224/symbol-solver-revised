@@ -3,33 +3,31 @@ package org.kryun.symbol.javaparser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
-import com.github.javaparser.ast.expr.VariableDeclarationExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithIdentifier;
-import com.github.javaparser.ast.stmt.DoStmt;
-import com.github.javaparser.ast.stmt.ForEachStmt;
-import com.github.javaparser.ast.stmt.ForStmt;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.Statement;
-import com.github.javaparser.ast.stmt.SwitchEntry;
-import com.github.javaparser.ast.stmt.SwitchStmt;
-import com.github.javaparser.ast.stmt.WhileStmt;
 import com.github.javaparser.ast.type.Type;
 import org.kryun.symbol.javaparser.management.BlockManager;
 import org.kryun.symbol.javaparser.management.ClassManager;
 import org.kryun.symbol.javaparser.management.ExpressionManager;
+import org.kryun.symbol.javaparser.management.ForStmtManager;
 import org.kryun.symbol.javaparser.management.FullQualifiedNameManager;
+import org.kryun.symbol.javaparser.management.IfStmtManager;
 import org.kryun.symbol.javaparser.management.ImportManager;
 import org.kryun.symbol.javaparser.management.MethodManager;
 import org.kryun.symbol.javaparser.management.PackageManager;
+import org.kryun.symbol.javaparser.management.SwitchStmtManager;
 import org.kryun.symbol.javaparser.management.SymbolReferenceManager;
 import org.kryun.symbol.javaparser.management.VariableManager;
+import org.kryun.symbol.javaparser.management.WhileStmtManager;
 import org.kryun.symbol.javaparser.model.dto.JavaParserArgumentDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserBlockDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserClassDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserExpressionDTO;
+import org.kryun.symbol.javaparser.model.dto.JavaParserForStmtDTO;
+import org.kryun.symbol.javaparser.model.dto.JavaParserIfStmtDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserImportDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserMemberVariableDeclarationDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserMethodCallExprDTO;
@@ -38,6 +36,8 @@ import org.kryun.symbol.javaparser.model.dto.JavaParserPackageDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserParameterDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserReturnMapperDTO;
 import org.kryun.symbol.javaparser.model.dto.JavaParserStmtVariableDeclarationDTO;
+import org.kryun.symbol.javaparser.model.dto.JavaParserSwitchStmtDTO;
+import org.kryun.symbol.javaparser.model.dto.JavaParserWhileStmtDTO;
 import org.kryun.symbol.model.dto.FullQualifiedNameDTO;
 import org.kryun.symbol.model.dto.Position;
 import org.kryun.symbol.model.dto.SymbolReferenceDTO;
@@ -46,7 +46,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import org.kryun.symbol.pkg.LastSymbolDetector;
 import org.kryun.symbol.pkg.builder.interfaces.SymbolContainer;
 
@@ -55,33 +54,40 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
     private final Long symbolStatusId;
     private final Boolean isDependency;
     private final LastSymbolDetector lastSymbolDetector = new LastSymbolDetector();
-    private TypeResolver typeResolver;
+
 
     private final SymbolReferenceManager symbolReferenceManager = new SymbolReferenceManager();
     private final BlockManager blockManager = new BlockManager();
     private final PackageManager packageManager = new PackageManager();
     private final ImportManager importManager = new ImportManager();
-    private final ClassManager classManager = new ClassManager();
-
-    private final VariableManager variableManager = new VariableManager();
-    private final MethodManager methodManager;
     private final FullQualifiedNameManager fullQualifiedNameManager = new FullQualifiedNameManager();
     private final ExpressionManager expressionManager = new ExpressionManager();
+
+    private final ClassManager classManager = new ClassManager(blockManager);
+    private final VariableManager variableManager = new VariableManager(expressionManager);
+    private final IfStmtManager ifStmtManager = new IfStmtManager(blockManager, expressionManager);
+    private final ForStmtManager forStmtManager = new ForStmtManager(blockManager, expressionManager);
+    private final WhileStmtManager whileStmtManager = new WhileStmtManager(blockManager, expressionManager);
+    private final SwitchStmtManager switchStmtManager = new SwitchStmtManager(blockManager, expressionManager);
+
+    private final MethodManager methodManager;
+    private final TypeResolver typeResolver;
+
 
     private Boolean hasPackage = false;
 
     public ConvertJavaParserToSymbol(Long symbolStatusId, Boolean isDependency) {
         this.isDependency = isDependency;
         this.symbolStatusId = symbolStatusId;
+        this.methodManager = new MethodManager(blockManager, expressionManager, isDependency);
         this.typeResolver = new TypeResolver(symbolStatusId, fullQualifiedNameManager);
-        this.methodManager = new MethodManager(expressionManager, isDependency);
     }
 
     public ConvertJavaParserToSymbol(Long symbolStatusId, Boolean isDependency, Connection conn) {
         this.isDependency = isDependency;
         this.symbolStatusId = symbolStatusId;
+        this.methodManager = new MethodManager(blockManager, expressionManager, isDependency);
         this.typeResolver = new TypeResolver(symbolStatusId, fullQualifiedNameManager, conn);
-        this.methodManager = new MethodManager(expressionManager, isDependency);
     }
 
     public List<SymbolReferenceDTO> getSymbolReferenceDTOList() {
@@ -140,7 +146,24 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
         return expressionManager.getExpressionDTOList();
     }
 
+    public List<JavaParserIfStmtDTO> getIfStmtDTOList() {
+        return ifStmtManager.getIfStmtDTOList();
+    }
+
+    public List<JavaParserForStmtDTO> getForStmtDTOList() {
+        return forStmtManager.getForStmtDTOList();
+    }
+
+    public List<JavaParserWhileStmtDTO> getWhileStmtDTOList() {
+        return whileStmtManager.getWhileStmtDTOList();
+    }
+
+    public List<JavaParserSwitchStmtDTO> getSwitchStmtDTOList() {
+        return switchStmtManager.getSwitchStmtDTOList();
+    }
+
     public String printLastSymbol() {
+        // 테스트 및 디버깅 용도
         return lastSymbolDetector.toString();
     }
 
@@ -199,69 +222,27 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
                 // static도 아니고, asterisk도 아닌 경우
                 typeImportMapper.put(javaParserImportDTO.getClassName(), javaParserImportDTO);
             }
-        } else if (nodeType.equals("ClassOrInterfaceDeclaration")) {
-            JavaParserClassDTO javaParserClassDTO = classManager.buildClass(javaParserBlockDTO, getCurrentPackageId(), node);
-            // 나 자신의 class block type 생성
-            javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(), nodeType, node, parentJavaParserBlockDTO.getSymbolReferenceId());
-            javaParserClassDTO.setOwnBlockProperties(javaParserBlockDTO);
-
-            lastSymbolDetector.saveLastSymbol("ClassOrInterfaceDeclaration", javaParserClassDTO.getName(), javaParserClassDTO.getPosition());
-
+        } else if (nodeType.equals("ClassOrInterfaceDeclaration") || nodeType.equals("EnumDeclaration")) {
+            JavaParserClassDTO javaParserClassDTO = classManager.buildClassOrEnum(javaParserBlockDTO, getCurrentPackageId(), node);
+            javaParserBlockDTO = javaParserClassDTO.getOwnBlock();
+            lastSymbolDetector.saveLastSymbol(nodeType, javaParserClassDTO.getName(), javaParserClassDTO.getPosition());
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, javaParserClassDTO, typeImportMapper);
-
-        } else if (nodeType.equals("EnumDeclaration")) {
-            JavaParserClassDTO enumDTO = classManager.buildEnum(javaParserBlockDTO, getCurrentPackageId(), node);
-
-            javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(), nodeType, node, parentJavaParserBlockDTO.getSymbolReferenceId());
-            lastSymbolDetector.saveLastSymbol("EnumDeclaration", enumDTO.getName(), enumDTO.getPosition());
-            typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, enumDTO, typeImportMapper);
 
         } else if (nodeType.equals("AnnotationDeclaration") || nodeType.equals("RecordDeclaration")) {
             javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(), nodeType,
                     node, parentJavaParserBlockDTO.getSymbolReferenceId());
         } else if (nodeType.equals("BlockStmt")) {
-
-            String blockStmtType = nodeType;
-            // 부모가 존재하는 경우.
-            if (node.getParentNode().isPresent()) {
-                Node parentNode = node.getParentNode().get();
-                String parentNodeType = parentNode.getMetaModel().getTypeName();
-
-                if (parentNode!=javaParserBlockDTO.getNode()) { // 부모가 존재하지만, parentNode가 symbol Table에 저장되지 않는 type인 경우.
-                    System.out.println("Debugging - parentNode is not equal to javaParserBlockDTO.getNode()");
-                    blockStmtType = parentNodeType; // 우선 기존처럼 부모 type으로 가지고 있도록 수정(try, catchClause 등)
-                } else {
-                    // 현재 하나의 BlockStmt로 취급되는 symbol이 부모인 경우
-                    // Todo. 만약 언어 및 parser별 타입을 통일하여 재정의시, javaParser Node의 type이 아닌, parentblockDTO type을 조건문에 사용할 것
-                    /**
-                     * * 현재 언어 및 parser 그리고 symbol 타입별로 block({})이 존재하거나 아닌 경우가 다 달라 BlockStmt 대신 body로 변경함.
-                     * ** ClassOrInterfaceDeclaration, EnumDeclaration, SwitchStmt 등의 경우 javaParser에서는 blockStmt 자식이 존재하지 않아 조건문에서 제외
-                     * *** 따라서 다른 파서나 언어에서 아래 코드 사용시에 주의할 것
-                     */
-                    if (parentNodeType.equals("MethodDeclaration") || parentNodeType.equals("ConstructorDeclaration")
-                            || parentNodeType.equals("SwitchEntry") || parentNodeType.equals("ForStmt") || parentNodeType.equals("ForEachStmt")
-                            || parentNodeType.equals("WhileStmt") || parentNodeType.equals("DoStmt")
-                    ) {
-                        blockStmtType = parentNodeType + "Body";
-                    } else if (parentNodeType.equals("IfStmt")) {
-                        // Todo. IfStmtManager method 사용할 것.
-                        IfStmt parentIfStmt = (IfStmt) parentNode;
-                        if (parentIfStmt.getThenStmt()==node) {
-                            blockStmtType = "thenStmt";
-                        } else {
-                            blockStmtType = "elseStmt";
-                        }
-                    }
-                }
-            }
+            String blockStmtType = getMyBlockTypeByParent(node, parentJavaParserBlockDTO);
             javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(),
                     blockStmtType, node, parentJavaParserBlockDTO.getSymbolReferenceId());
+            // 실제 BlockStmt만 bracket position을 저장
+            javaParserBlockDTO.setBracketPosition(javaParserBlockDTO.getPosition());
         }
         // 클래스 바로 아래에서 변수를 선언하는 멤버 필드
         else if (nodeType.equals("FieldDeclaration")) {
             JavaParserClassDTO belongedClassDTOByBlock = classManager.findClassDTOByBlock(javaParserBlockDTO);
-            List<JavaParserMemberVariableDeclarationDTO> mvdDtoList = variableManager.buildVariableDeclInMemberField(javaParserBlockDTO,
-                    belongedClassDTOByBlock.getClassId(), node, expressionManager);
+            List<JavaParserMemberVariableDeclarationDTO> mvdDtoList =
+                    variableManager.buildVariableDeclInMemberField(javaParserBlockDTO, belongedClassDTOByBlock.getClassId(), node);
 
             JavaParserMemberVariableDeclarationDTO firstMvdDTO = mvdDtoList.get(0);
 
@@ -278,7 +259,7 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
         }
         // 함수 내에서 선언하는 변수
         else if (nodeType.equals("VariableDeclarationExpr")) {
-            List<JavaParserStmtVariableDeclarationDTO> stmtDtoList = variableManager.buildVariableDeclInMethod(javaParserBlockDTO, node, expressionManager);
+            List<JavaParserStmtVariableDeclarationDTO> stmtDtoList = variableManager.buildVariableDeclInMethod(javaParserBlockDTO, node);
             JavaParserStmtVariableDeclarationDTO firstStmtDTO = stmtDtoList.get(0);
 
             lastSymbolDetector.saveLastSymbol("VariableDeclarationExpr", firstStmtDTO.getName(), firstStmtDTO.getPosition());
@@ -298,30 +279,23 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
             JavaParserMethodDeclarationDTO mdDto = methodManager.buildMethodDeclaration(javaParserBlockDTO, belongedClassDTOByBlock.getClassId(), node);
 
             // 나 자신의 block type 생성
-            javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(), nodeType, node, parentJavaParserBlockDTO.getSymbolReferenceId());
-            mdDto.setOwnBlockProperties(javaParserBlockDTO);
-
+            javaParserBlockDTO = mdDto.getOwnBlock();
             lastSymbolDetector.saveLastSymbol("MethodDeclaration", mdDto.getName(), mdDto.getPosition());
-
             typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, mdDto, typeImportMapper);
 
         } else if (nodeType.equals("MethodCallExpr")) {
             JavaParserMethodCallExprDTO mceDto = methodManager.buildMethodCallExpr(javaParserBlockDTO, node);
-
             lastSymbolDetector.saveLastSymbol("MethodCallExpr", mceDto.getName(), mceDto.getPosition());
-
             if (!isDependency) {
                 // Dependency가 아닌 경우에만 동작
                 typeResolver.resolveSymbolAndUpdateFQNDTO(node, nodeType, mceDto, typeImportMapper);
             }
-
         } else if (nodeType.equals("AssignExpr")) {
             // test
             expressionManager.buildExpressionRecursively(null, null,
                     javaParserBlockDTO.getBlockId(), (Expression) node);
         } else if (nodeType.equals("ObjectCreationExpr")) {
             ObjectCreationExpr objectCreationExpr = (ObjectCreationExpr) node;
-
             lastSymbolDetector.saveLastSymbol("ObjectCreationExpr", objectCreationExpr.getTypeAsString(), new Position(node.getRange().get().begin.line, node.getRange().get().begin.column, node.getRange().get().end.line, node.getRange().get().end.column));
 
             // 내부에 초기화 블록이 존재할 때만 생성하도록 추가
@@ -332,77 +306,26 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
                         nodeType, node, parentJavaParserBlockDTO.getSymbolReferenceId());
             }
         } else if (nodeType.equals("IfStmt")) {
-            System.out.println("Debugging - IfStmt");
-            IfStmt ifStmtNode = (IfStmt) node;
-            Statement thenStmt = ifStmtNode.getThenStmt();
-            if (!thenStmt.isBlockStmt()) {
-                String typeName = thenStmt.getMetaModel().getTypeName();
-                String parentTypeName = thenStmt.getParentNode().get().getMetaModel().getTypeName();
-                System.out.println("Debugging - ThenStmt Type: " + typeName);
-                System.out.println("parentTypeName = " + parentTypeName);
-            }
-            Optional<Statement> elseStmt = ifStmtNode.getElseStmt();
-            if (elseStmt.isPresent()) {
-                System.out.println("Debugging - ElseStmt is present");
-                if (elseStmt.get().isIfStmt()) {
-                    System.out.println("Debugging - ElseStmt is IfStmt");
-                } else if (elseStmt.get().isBlockStmt()) {
-                    System.out.println("Debugging - ElseStmt is blockStmt");
-                } else {
-                    Statement statement = elseStmt.get();
-                    String typeName = statement.getMetaModel().getTypeName();
-                    String parentTypeName = statement.getParentNode().get().getMetaModel().getTypeName();
-                    System.out.println("Debugging - ElseStmt Type: " + typeName);
-                    System.out.println("parentTypeName = " + parentTypeName);
-                }
-            }
-        } else if (nodeType.equals("SwitchStmt")) {
-            System.out.println("Debugging - SwitchStmt");
-            SwitchStmt switchStmt = (SwitchStmt) node;
-            NodeList<SwitchEntry> entries = switchStmt.getEntries();
-            for (SwitchEntry entry : entries) {
-                System.out.println("Debugging - SwitchEntry");
-                // entry 의 label은 Expression
-                NodeList<Expression> labels = entry.getLabels();
-                NodeList<Statement> statements = entry.getStatements();
-                for (Statement statement : statements) {
-                    System.out.println("Debugging - Statement");
-                }
-            }
-        } else if (nodeType.equals("ForStmt")) {
-            ForStmt forStmt = (ForStmt) node;
-            Statement body = forStmt.getBody();
-            NodeList<Expression> initialization = forStmt.getInitialization();
-            NodeList<Expression> update = forStmt.getUpdate();
-            Optional<Expression> compare = forStmt.getCompare();
-        } else if (nodeType.equals("ForEachStmt")) {
-            ForEachStmt forEachStmt = (ForEachStmt) node;
-            Statement body = forEachStmt.getBody();
-            Expression iterable = forEachStmt.getIterable();
-            VariableDeclarationExpr variable = forEachStmt.getVariable();
-        } else if (nodeType.equals("WhileStmt")) {
-            WhileStmt whileStmt = (WhileStmt) node;
-            // body는 block일 수도 있고 아닐 수도 있다.. => while_stmt_body type으로 생성할 것
-            Statement body = whileStmt.getBody();
-            Expression condition = whileStmt.getCondition();
-        } else if (nodeType.equals("DoStmt")) {
-            DoStmt doStmt = (DoStmt) node;
-            Statement body = doStmt.getBody();
-            Expression condition = doStmt.getCondition();
+            JavaParserIfStmtDTO ifStmtDTO = ifStmtManager.buildIfStatement(javaParserBlockDTO, (IfStmt) node);
+            javaParserBlockDTO = ifStmtDTO.getOwnBlock();
+        } else if (nodeType.equals("ForStmt") || nodeType.equals("ForEachStmt")) {
+            JavaParserForStmtDTO forStmtDTO = forStmtManager.buildForOrForEachStatement(javaParserBlockDTO, node);
+            javaParserBlockDTO = forStmtDTO.getOwnBlock();
+        } else if (nodeType.equals("WhileStmt") || nodeType.equals("DoStmt")) {
+            JavaParserWhileStmtDTO whileStmtDTO = whileStmtManager.buildWhileOrDoWhileStatement(javaParserBlockDTO, node);
+            javaParserBlockDTO = whileStmtDTO.getOwnBlock();
+        } else if (nodeType.equals("SwitchStmt") || nodeType.equals("SwitchEntry")) {
+            JavaParserSwitchStmtDTO switchStmtDTO = switchStmtManager.buildSwitchOrCaseStatement(javaParserBlockDTO, node);
+            javaParserBlockDTO = switchStmtDTO.getOwnBlock();
         } else if (Statement.class.isAssignableFrom(node.getClass())) {
-            // if 문 내부의 Statement (1줄인 경우 block 생성 필요)
-            // switch 문의 경우 여러 줄이 switchEntry 블록을 부모로 저장됨 (DFS)
-            if (node.getParentNode().isPresent() && node.getParentNode().get().getMetaModel().getTypeName().equals("IfStmt")) {
-                // Todo. node를 받아서 부모가 if인지 판별 후 현재 node가 then인지 else인지 판별하는 메소드를 ifStmtManager에 추가 => Optional<String>을 반환해서 empty이면 부모가 ifStmt가 아니다.
-                IfStmt parentIfStmt = (IfStmt) node.getParentNode().get();
-                if (parentIfStmt.getThenStmt()==node) {
-                    javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(),
-                            "thenStmt", node, parentJavaParserBlockDTO.getSymbolReferenceId());
-                } else {
-                    javaParserBlockDTO = blockManager.buildBlock(parentJavaParserBlockDTO.getDepth() + 1, parentJavaParserBlockDTO.getBlockId(),
-                            "elseStmt", node, parentJavaParserBlockDTO.getSymbolReferenceId());
-                }
-            }
+            /**
+             * Statement를 상속받은 노드 중, 부모가 ifStmt인 경우에 block 처리 하지 않음.
+             * * while, do-while, for, forEach문 모두 자식으로 하나의 statement를 가질 수 있고 이를 body-block 처리하자 않았기 때문.
+             * * 또한, thenStmt와 elseStmt에 다른 제어문이 올 수 있는데... 모든 statement의 block을 저장할 때 type을 위해 부모를 확인해야하는 번거러움이 존재.
+             *
+             * ifStmt의 경우, thenStmt와 elseStmt가 따로 Node 형태로 존재하지 않아, 2개의 Statement가 ifStmt Block을 부모로 갖는다.
+             * 일단은 구분을 position으로 해서 비즈니스 로직 처리.
+             */
         }
 
         expressionManager.deleteExpressionDTO(node.hashCode());
@@ -421,5 +344,30 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
     // *** identifier 자체를 수정하면 에러 발생! ***
     private long getCurrentPackageId() {
         return hasPackage ? packageManager.getLastId():-100L;
+    }
+
+    private String getMyBlockTypeByParent(Node node, JavaParserBlockDTO parentJavaParserBlockDTO) {
+        String blockType = node.getMetaModel().getTypeName();
+        if (node.getParentNode().isPresent()) {
+            Node parentNode = node.getParentNode().get();
+            String parentNodeType = parentNode.getMetaModel().getTypeName();
+            if (parentNode!=parentJavaParserBlockDTO.getNode()) {
+                // 부모가 존재하지만, parentNode가 symbol Table에 저장되지 않는 type인 경우.
+                blockType = parentNodeType;
+            } else if (parentNodeType.equals("MethodDeclaration") || parentNodeType.equals("ConstructorDeclaration")
+                    || parentNodeType.equals("SwitchEntry") || parentNodeType.equals("ForStmt") || parentNodeType.equals("ForEachStmt")
+                    || parentNodeType.equals("WhileStmt") || parentNodeType.equals("DoStmt")
+            ) {
+                blockType = parentNodeType + "Body";
+            } else if (parentNodeType.equals("IfStmt")) {
+                IfStmt parentIfStmt = (IfStmt) parentNode;
+                if (parentIfStmt.getThenStmt()==node) {
+                    blockType = "thenStmtBody";
+                } else {
+                    blockType = "elseStmtBody";
+                }
+            }
+        }
+        return blockType;
     }
 }

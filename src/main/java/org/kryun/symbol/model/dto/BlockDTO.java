@@ -22,11 +22,8 @@ public class BlockDTO {
                 ", parentBlockId : " + parentBlockId +
                 ", depth : " + depth +
                 ", blockType : '" + blockType + '\'' +
-                // ", srcPath : '" + srcPath + "\"" +
                 ", Position : '" + position + '\'' +
                 ", Position : '" + bracketPosition + '\'' +
-                // "}\n";
-                // ", \nblockNode : \n" + blockNode +
                 ", symbolReferenceId : " + symbolReferenceId +
                 "}\n";
     }
