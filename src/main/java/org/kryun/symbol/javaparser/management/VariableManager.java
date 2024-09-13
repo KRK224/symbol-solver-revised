@@ -23,8 +23,9 @@ import org.kryun.symbol.pkg.IdentifierGenerator;
 @Getter
 public class VariableManager {
 
-    private final List<JavaParserMemberVariableDeclarationDTO> javaParserMemberVariableDeclarationDTOList;
-    private final List<JavaParserStmtVariableDeclarationDTO> javaParserStmtVariableDeclarationDTOList;
+    private final List<JavaParserMemberVariableDeclarationDTO> javaParserMemberVariableDeclarationDTOList = new ArrayList<>();
+    private final List<JavaParserStmtVariableDeclarationDTO> javaParserStmtVariableDeclarationDTOList = new ArrayList<>();
+    private final ExpressionManager expressionManager;
 
     private final IdentifierGenerator memVarDeclIdGenerator = new IdentifierGenerator("member_var_decl");
     private final IdentifierGenerator stmtVarDeclIdGenerator = new IdentifierGenerator("stmt_var_decl");
@@ -36,10 +37,8 @@ public class VariableManager {
         return identifierMap;
     }
 
-    public VariableManager() {
-        this.javaParserMemberVariableDeclarationDTOList = new ArrayList<>();
-        this.javaParserStmtVariableDeclarationDTOList = new ArrayList<>();
-
+    public VariableManager(ExpressionManager expressionManager) {
+        this.expressionManager = expressionManager;
     }
 
     public void clear() {
@@ -47,7 +46,7 @@ public class VariableManager {
         this.javaParserStmtVariableDeclarationDTOList.clear();
     }
 
-    public List<JavaParserMemberVariableDeclarationDTO> buildVariableDeclInMemberField(JavaParserBlockDTO javaParserBlockDTO, Long belongedClassId, Node node, ExpressionManager expressionManager) {
+    public List<JavaParserMemberVariableDeclarationDTO> buildVariableDeclInMemberField(JavaParserBlockDTO javaParserBlockDTO, Long belongedClassId, Node node) {
         Long blockId = javaParserBlockDTO.getBlockId();
         FieldDeclaration fieldDeclaration = (FieldDeclaration) node;
         List<JavaParserMemberVariableDeclarationDTO> variableDeclarationDTOList = new ArrayList<>();
@@ -93,7 +92,7 @@ public class VariableManager {
 
             javaParserMemberVariableDeclarationDTOList.add(variableDeclarationDTO);
             variableDeclarationDTOList.add(variableDeclarationDTO);
-            if(variableDeclarator.getInitializer().isPresent()){
+            if (variableDeclarator.getInitializer().isPresent()) {
                 Expression expression = variableDeclarator.getInitializer().get();
                 JavaParserExpressionDTO initializerExpr = expressionManager.buildExpressionRecursively(null, ExpressionRelationEnum.VARIABLE_DECLARATOR_INIT, blockId, expression);
                 variableDeclarationDTO.setInitializerExpr(initializerExpr);
@@ -103,7 +102,7 @@ public class VariableManager {
         return variableDeclarationDTOList;
     }
 
-    public List<JavaParserStmtVariableDeclarationDTO> buildVariableDeclInMethod(JavaParserBlockDTO javaParserBlockDTO, Node node, ExpressionManager expressionManager) {
+    public List<JavaParserStmtVariableDeclarationDTO> buildVariableDeclInMethod(JavaParserBlockDTO javaParserBlockDTO, Node node) {
         Long blockId = javaParserBlockDTO.getBlockId();
         VariableDeclarationExpr variableDeclarationExpr = (VariableDeclarationExpr) node;
         List<JavaParserStmtVariableDeclarationDTO> variableDeclarationDTOList = new ArrayList<>();
@@ -149,7 +148,7 @@ public class VariableManager {
             javaParserStmtVariableDeclarationDTOList.add(variableDeclarationDTO);
             variableDeclarationDTOList.add(variableDeclarationDTO);
 
-            if(variableDeclarator.getInitializer().isPresent()){
+            if (variableDeclarator.getInitializer().isPresent()) {
                 Expression expression = variableDeclarator.getInitializer().get();
                 JavaParserExpressionDTO initializerExpr = expressionManager.buildExpressionRecursively(null, ExpressionRelationEnum.VARIABLE_DECLARATOR_INIT, blockId, expression);
                 variableDeclarationDTO.setInitializerExpr(initializerExpr);

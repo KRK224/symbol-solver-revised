@@ -21,7 +21,9 @@ import org.kryun.symbol.model.dto.ArgumentDTO;
 import org.kryun.symbol.model.dto.BlockDTO;
 import org.kryun.symbol.model.dto.ClassDTO;
 import org.kryun.symbol.model.dto.ExpressionDTO;
+import org.kryun.symbol.model.dto.ForStmtDTO;
 import org.kryun.symbol.model.dto.FullQualifiedNameDTO;
+import org.kryun.symbol.model.dto.IfStmtDTO;
 import org.kryun.symbol.model.dto.ImportDTO;
 import org.kryun.symbol.model.dto.MemberVariableDeclarationDTO;
 import org.kryun.symbol.model.dto.MethodCallExprDTO;
@@ -30,7 +32,9 @@ import org.kryun.symbol.model.dto.PackageDTO;
 import org.kryun.symbol.model.dto.ParameterDTO;
 import org.kryun.symbol.model.dto.ReturnMapperDTO;
 import org.kryun.symbol.model.dto.StmtVariableDeclarationDTO;
+import org.kryun.symbol.model.dto.SwitchStmtDTO;
 import org.kryun.symbol.model.dto.SymbolReferenceDTO;
+import org.kryun.symbol.model.dto.WhileStmtDTO;
 import org.kryun.symbol.pkg.builder.interfaces.SymbolContainer;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.kryun.symbol.pkg.save.interfaces.SymbolSaver;
@@ -63,6 +67,10 @@ public class SaveSymbolToExcel implements SymbolSaver {
             createExcelSheet(wb, symbolContainer.getArgumentDTOList(), ArgumentDTO.class);
             createExcelSheet(wb, symbolContainer.getParameterDTOList(), ParameterDTO.class);
             createExcelSheet(wb, symbolContainer.getReturnMapperDTOList(), ReturnMapperDTO.class);
+            createExcelSheet(wb, symbolContainer.getIfStmtDTOList(), IfStmtDTO.class);
+            createExcelSheet(wb, symbolContainer.getForStmtDTOList(), ForStmtDTO.class);
+            createExcelSheet(wb, symbolContainer.getWhileStmtDTOList(), WhileStmtDTO.class);
+            createExcelSheet(wb, symbolContainer.getSwitchStmtDTOList(), SwitchStmtDTO.class);
 
             saveExcelFile(wb);
         } catch (Exception e) {

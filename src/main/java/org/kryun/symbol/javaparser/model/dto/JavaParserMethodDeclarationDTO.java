@@ -12,7 +12,12 @@ public class JavaParserMethodDeclarationDTO extends MethodDeclarationDTO {
 
     private JavaParserReturnMapperDTO returnMapper;
     private List<JavaParserParameterDTO> parameters;
-    private Node node;
+    private JavaParserBlockDTO ownBlock;
+
+    public void setOwnBlockProperties(JavaParserBlockDTO ownBlock) {
+        this.ownBlock = ownBlock;
+        this.setOwnBlockId(ownBlock.getBlockId());
+    }
 
     @Override
     public String toString() {
@@ -23,7 +28,6 @@ public class JavaParserMethodDeclarationDTO extends MethodDeclarationDTO {
                 ", fullQualifiedNameId : " + getFullQualifiedNameId() +
                 ", isFullQualifiedNameIdFromDB : " + getIsFullQualifiedNameIdFromDB() +
                 ", name: '" + getName() + '\'' +
-                "', nodeType: '" + node.getMetaModel().getTypeName() + // Todo. 이거 필요한지 알아보기...
                 ", modifier: '" + getModifier() + '\'' +
                 ", accessModifier: '" + getAccessModifier() + '\'' +
                 ", returnMappers: " + returnMapper +

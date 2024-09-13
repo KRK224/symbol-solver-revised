@@ -21,7 +21,9 @@ import org.kryun.symbol.model.dto.ArgumentDTO;
 import org.kryun.symbol.model.dto.BlockDTO;
 import org.kryun.symbol.model.dto.ClassDTO;
 import org.kryun.symbol.model.dto.ExpressionDTO;
+import org.kryun.symbol.model.dto.ForStmtDTO;
 import org.kryun.symbol.model.dto.FullQualifiedNameDTO;
+import org.kryun.symbol.model.dto.IfStmtDTO;
 import org.kryun.symbol.model.dto.ImportDTO;
 import org.kryun.symbol.model.dto.MemberVariableDeclarationDTO;
 import org.kryun.symbol.model.dto.MethodCallExprDTO;
@@ -31,7 +33,9 @@ import org.kryun.symbol.model.dto.ParameterDTO;
 import org.kryun.symbol.model.dto.Position;
 import org.kryun.symbol.model.dto.ReturnMapperDTO;
 import org.kryun.symbol.model.dto.StmtVariableDeclarationDTO;
+import org.kryun.symbol.model.dto.SwitchStmtDTO;
 import org.kryun.symbol.model.dto.SymbolReferenceDTO;
+import org.kryun.symbol.model.dto.WhileStmtDTO;
 import org.kryun.symbol.pkg.builder.interfaces.SymbolContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +80,10 @@ public class CSVParser implements SymbolContainer {
     private final List<MemberVariableDeclarationDTO> memberVariableDeclarationDTOList = new ArrayList<>();
     private final List<ExpressionDTO> expressionDTOList = new ArrayList<>();
     private final List<FullQualifiedNameDTO> fullQualifiedNameDTOList = new ArrayList<>();
+    private final List<IfStmtDTO> ifStmtDTOList = new ArrayList<>();
+    private final List<ForStmtDTO> forStmtDTOList = new ArrayList<>();
+    private final List<WhileStmtDTO> whileStmtDTOList = new ArrayList<>();
+    private final List<SwitchStmtDTO> switchStmtDTOList = new ArrayList<>();
 
     @Override
     public Map<String, Long> getSymbolIds() {
@@ -153,6 +161,27 @@ public class CSVParser implements SymbolContainer {
     }
 
     @Override
+    public List<? extends IfStmtDTO> getIfStmtDTOList() {
+        return ifStmtDTOList;
+    }
+
+    @Override
+    public List<? extends ForStmtDTO> getForStmtDTOList() {
+        return forStmtDTOList;
+    }
+
+    @Override
+    public List<? extends WhileStmtDTO> getWhileStmtDTOList() {
+        return whileStmtDTOList;
+    }
+
+    @Override
+    public List<? extends SwitchStmtDTO> getSwitchStmtDTOList() {
+        return switchStmtDTOList;
+    }
+
+
+    @Override
     public void clear() {
         symbolIds.clear();
         symbolReferenceDTOList.clear();
@@ -169,6 +198,10 @@ public class CSVParser implements SymbolContainer {
         memberVariableDeclarationDTOList.clear();
         expressionDTOList.clear();
         fullQualifiedNameDTOList.clear();
+        ifStmtDTOList.clear();
+        forStmtDTOList.clear();
+        whileStmtDTOList.clear();
+        switchStmtDTOList.clear();
     }
 
     public void parseFile() throws Exception {
@@ -202,7 +235,7 @@ public class CSVParser implements SymbolContainer {
 
             while (iterator.hasNext()) {
                 CSVRecord record = iterator.next();
-                Object instance = hasBuilder? createInstanceByBuilder(classType, headerList, record) : createInstanceByConstructor(classType, headerList, record);
+                Object instance = hasBuilder ? createInstanceByBuilder(classType, headerList, record):createInstanceByConstructor(classType, headerList, record);
                 addToList(symbolType, instance);
             }
 
@@ -215,7 +248,7 @@ public class CSVParser implements SymbolContainer {
 
     private static boolean hasBuilder(Class<?> classType) {
         try {
-            Class.forName(classType.getName() +"$" +classType.getSimpleName() +"Builder");
+            Class.forName(classType.getName() + "$" + classType.getSimpleName() + "Builder");
             return true;
         } catch (Exception e) {
             return false;
@@ -266,7 +299,7 @@ public class CSVParser implements SymbolContainer {
     private Object createInstanceByBuilder(Class<?> classType, List<String> headerList, CSVRecord record) throws Exception {
         Long lastId = -1L;
         System.out.println(classType.getName());
-        Class<?> builderClass = Class.forName(classType.getName() +"$" +classType.getSimpleName() +"Builder");
+        Class<?> builderClass = Class.forName(classType.getName() + "$" + classType.getSimpleName() + "Builder");
         Object builderInstance = classType.getMethod("builder").invoke(null);
         for (int i = 0; i < headerList.size(); i++) {
             String header = headerList.get(i);
@@ -313,16 +346,18 @@ public class CSVParser implements SymbolContainer {
             case "ImportDTO" -> importDTOList.add((ImportDTO) instance);
             case "ParameterDTO" -> parameterDTOList.add((ParameterDTO) instance);
             case "ReturnMapperDTO" -> returnMapperDTOList.add((ReturnMapperDTO) instance);
-            case "MethodDeclarationDTO" ->
-                    methodDeclarationDTOList.add((MethodDeclarationDTO) instance);
+            case "MethodDeclarationDTO" -> methodDeclarationDTOList.add((MethodDeclarationDTO) instance);
             case "MethodCallExprDTO" -> methodCallExprDTOList.add((MethodCallExprDTO) instance);
             case "StmtVariableDeclarationDTO" ->
                     stmtVariableDeclarationDTOList.add((StmtVariableDeclarationDTO) instance);
             case "MemberVariableDeclarationDTO" ->
                     memberVariableDeclarationDTOList.add((MemberVariableDeclarationDTO) instance);
             case "ExpressionDTO" -> expressionDTOList.add((ExpressionDTO) instance);
-            case "FullQualifiedNameDTO" ->
-                    fullQualifiedNameDTOList.add((FullQualifiedNameDTO) instance);
+            case "FullQualifiedNameDTO" -> fullQualifiedNameDTOList.add((FullQualifiedNameDTO) instance);
+            case "IfStmtDTO" -> ifStmtDTOList.add((IfStmtDTO) instance);
+            case "ForStmtDTO" -> forStmtDTOList.add((ForStmtDTO) instance);
+            case "WhileStmtDTO" -> whileStmtDTOList.add((WhileStmtDTO) instance);
+            case "SwitchStmtDTO" -> switchStmtDTOList.add((SwitchStmtDTO) instance);
             default -> throw new IllegalArgumentException("Unsupported symbol type: " + symbolType);
         }
     }
@@ -406,6 +441,10 @@ public class CSVParser implements SymbolContainer {
             case "ExpressionDTO" -> "expressionId";
             case "FullQualifiedNameDTO" -> "fullQualifiedNameId";
             case "SymbolReferenceDTO" -> "symbolReferenceId";
+            case "IfStmtDTO" -> "ifStmttId";
+            case "ForStmtDTO" -> "forStmtId";
+            case "WhileStmtDTO" -> "whileStmtId";
+            case "SwitchStmtDTO" -> "switchStmtId";
             default -> null;
         };
     }

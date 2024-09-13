@@ -40,6 +40,10 @@ public class SaveSymbolToCSV implements SymbolSaver {
         saveCSVFile(symbolContainer.getArgumentDTOList(), ArgumentDTO.class, savePath);
         saveCSVFile(symbolContainer.getParameterDTOList(), ParameterDTO.class, savePath);
         saveCSVFile(symbolContainer.getReturnMapperDTOList(), ReturnMapperDTO.class, savePath);
+        saveCSVFile(symbolContainer.getIfStmtDTOList(), IfStmtDTO.class, savePath);
+        saveCSVFile(symbolContainer.getForStmtDTOList(), ForStmtDTO.class, savePath);
+        saveCSVFile(symbolContainer.getWhileStmtDTOList(), WhileStmtDTO.class, savePath);
+        saveCSVFile(symbolContainer.getSwitchStmtDTOList(), SwitchStmtDTO.class, savePath);
     }
 
     @Override
@@ -84,14 +88,14 @@ public class SaveSymbolToCSV implements SymbolSaver {
                         field = clazz.getDeclaredField(column);
                     } catch (NoSuchFieldException e) {
                         clazz = clazz.getSuperclass();
-                        if(!clazz.getPackage().equals(classType.getPackage()))
+                        if (!clazz.getPackage().equals(classType.getPackage()))
                             throw new Exception("SaveSymbolToCSV::saveCSVFile::" + column + " is not found in " + classType.getSimpleName());
                         field = clazz.getDeclaredField(column);
                     }
                     String getterMethodName = SymbolSaver.getGetterMethodName(field);
                     try {
                         Object value = clazz.getDeclaredMethod(getterMethodName).invoke(data);
-                        if(value !=null)
+                        if (value!=null)
                             row.add(value.toString());
                         else
                             row.add("");

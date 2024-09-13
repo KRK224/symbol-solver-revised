@@ -23,7 +23,7 @@ public class SaveAsSymbol {
             if (resultPath!=null) {
                 projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, resultPath, fileType);
             } else {
-                projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, true, fileType);
+                projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, false, fileType);
             }
             projectParser.parseProject();
             symbolStatusDTO.setStatusEnum(SymbolStatusEnum.COMPLETED);
@@ -34,7 +34,6 @@ public class SaveAsSymbol {
             SymbolStatusEnum errorStatus = e instanceof SaveSymbolException ? ((SaveSymbolException) e).getSymbolStatusEnum():SymbolStatusEnum.ERROR;
             symbolStatusDTO.setUpdatedTime(new Timestamp(System.currentTimeMillis()));
             symbolStatusDTO.setStatusEnum(errorStatus);
-
 
             return symbolStatusDTO;
         }

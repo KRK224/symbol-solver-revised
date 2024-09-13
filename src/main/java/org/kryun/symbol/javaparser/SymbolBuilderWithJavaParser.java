@@ -5,9 +5,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.symbolsolver.utils.SymbolSolverCollectionStrategy;
 import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
-import java.util.Comparator;
 import org.kryun.global.enums.symbol.SymbolStatusEnum;
-import org.kryun.global.utils.FileUtil;
 import org.kryun.symbol.javaparser.model.exception.SaveSymbolException;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -19,6 +17,7 @@ import org.kryun.symbol.pkg.builder.interfaces.SymbolBuilder;
 import org.kryun.symbol.pkg.builder.interfaces.SymbolContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public class SymbolBuilderWithJavaParser implements SymbolBuilder {
     private final Logger logger = LoggerFactory.getLogger(SymbolBuilderWithJavaParser.class.getName());
@@ -56,6 +55,9 @@ public class SymbolBuilderWithJavaParser implements SymbolBuilder {
                         String fileName = cu.getStorage().get().getPath().toString();
                         String srcPath = fileName.replace(projectPath + "/", "");
                         logger.info("fileName:" + fileName);
+                        if (srcPath.endsWith("Testcode.java")) {
+                            System.out.println("fileName is Testcode");
+                        }
                         convertJavaParserToSymbol.visit(cu, srcPath);
 
                     }

@@ -33,6 +33,7 @@ public class MethodManager {
     private final List<JavaParserParameterDTO> javaParserParameterDTOList;
     private final List<JavaParserArgumentDTO> javaParserArgumentDTOList;
     private final List<JavaParserReturnMapperDTO> javaParserReturnMapperDTOList;
+    private final BlockManager blockManager;
 
     private final IdentifierGenerator methodDeclarationIdGenerator = new IdentifierGenerator("method_decl");
 
@@ -56,7 +57,8 @@ public class MethodManager {
 
     // private final Map<String, Long> symbolIds;
 
-    public MethodManager(ExpressionManager expressionManager, Boolean isDependency) {
+    public MethodManager(BlockManager blockManager, ExpressionManager expressionManager, Boolean isDependency) {
+        this.blockManager = blockManager;
         this.javaParserMethodDeclarationDTOList = new ArrayList<>();
         this.javaParserMethodCallExprDTOList = new ArrayList<>();
         this.javaParserParameterDTOList = new ArrayList<>();
@@ -74,10 +76,12 @@ public class MethodManager {
         this.javaParserReturnMapperDTOList.clear();
     }
 
-    public JavaParserMethodDeclarationDTO buildMethodDeclaration(JavaParserBlockDTO javaParserBlockDTO, Long belongedClassId, Node node) {
+    public JavaParserMethodDeclarationDTO buildMethodDeclaration(JavaParserBlockDTO parentBlock, Long belongedClassId, Node node) {
         Long methodDeclarationId = methodDeclarationIdGenerator.nextId();
-        Long blockId = javaParserBlockDTO.getBlockId();
+        Long blockId = parentBlock.getBlockId();
         JavaParserMethodDeclarationDTO javaParserMethodDeclarationDTO = new JavaParserMethodDeclarationDTO();
+        JavaParserBlockDTO ownBlock = blockManager.buildBlock(parentBlock, node);
+        javaParserMethodDeclarationDTO.setOwnBlockProperties(ownBlock);
         JavaParserReturnMapperDTO javaParserReturnMapperDTO = new JavaParserReturnMapperDTO();
         List<Node> childNodes = node.getChildNodes();
         List<JavaParserParameterDTO> localJavaParserParameterDTOList = new ArrayList<>();
@@ -123,12 +127,7 @@ public class MethodManager {
                 javaParserParameterDTO.setName(name);
                 javaParserParameterDTO.setType(type);
                 javaParserParameterDTO.setNode(parameterNode);
-                javaParserParameterDTO.setPosition(
-                        new Position(
-                                parameterNode.getRange().get().begin.line,
-                                parameterNode.getRange().get().begin.column,
-                                parameterNode.getRange().get().end.line,
-                                parameterNode.getRange().get().end.column));
+                javaParserParameterDTO.setPosition(Position.getPositionByNode(parameterNode));
 
                 javaParserParameterDTOList.add(javaParserParameterDTO);
                 localJavaParserParameterDTOList.add(javaParserParameterDTO);
@@ -154,18 +153,14 @@ public class MethodManager {
                 javaParserReturnMapperDTO.setMethodDeclId(methodDeclarationId);
                 javaParserReturnMapperDTO.setType(returnValueTypeName);
                 javaParserReturnMapperDTO.setNode(childNode);
-                javaParserReturnMapperDTO.setPosition(
-                        new Position(
-                                childNode.getRange().get().begin.line,
-                                childNode.getRange().get().begin.column,
-                                childNode.getRange().get().end.line,
-                                childNode.getRange().get().end.column));
+                javaParserReturnMapperDTO.setPosition(Position.getPositionByNode(childNode));
                 javaParserReturnMapperDTOList.add(javaParserReturnMapperDTO);
             }
         }
 
         javaParserMethodDeclarationDTO.setMethodDeclId(methodDeclarationId);
         javaParserMethodDeclarationDTO.setBlockId(blockId);
+//        javaParserMethodDeclarationDTO.setOwnBlockProperties(ownBlock);
         javaParserMethodDeclarationDTO.setBelongedClassId(belongedClassId);
         javaParserMethodDeclarationDTO.setName(methodName);
         javaParserMethodDeclarationDTO.setModifier(modifierKeyword);
@@ -173,14 +168,7 @@ public class MethodManager {
         // add to methodDeclarationDTO
         javaParserMethodDeclarationDTO.setReturnMapper(javaParserReturnMapperDTO);
         javaParserMethodDeclarationDTO.setParameters(localJavaParserParameterDTOList);
-
-        javaParserMethodDeclarationDTO.setNode(node);
-        javaParserMethodDeclarationDTO.setPosition(
-                new Position(
-                        node.getRange().get().begin.line,
-                        node.getRange().get().begin.column,
-                        node.getRange().get().end.line,
-                        node.getRange().get().end.column));
+        javaParserMethodDeclarationDTO.setPosition(Position.getPositionByNode(node));
 
         javaParserMethodDeclarationDTOList.add(javaParserMethodDeclarationDTO);
         return javaParserMethodDeclarationDTO;
@@ -230,21 +218,11 @@ public class MethodManager {
                     null, null, blockId, arg);
 
             javaParserArgumentDTO.setExpressionId(javaParserExpressionDTO.getExpressionId());
-            javaParserArgumentDTO.setPosition(
-                    new Position(
-                            arg.getRange().get().begin.line,
-                            arg.getRange().get().begin.column,
-                            arg.getRange().get().end.line,
-                            arg.getRange().get().end.column));
+            javaParserArgumentDTO.setPosition(Position.getPositionByNode(arg));
             javaParserArgumentDTOList.add(javaParserArgumentDTO);
             localJavaParserArgumentDTOList.add(javaParserArgumentDTO);
         }
-        javaParserMethodCallExprDTO.setPosition(
-                new Position(
-                        node.getRange().get().begin.line,
-                        node.getRange().get().begin.column,
-                        node.getRange().get().end.line,
-                        node.getRange().get().end.column));
+        javaParserMethodCallExprDTO.setPosition(Position.getPositionByNode(methodCallExpr));
 
         javaParserMethodCallExprDTO.setMethodCallExprId(methodCallExprId);
         javaParserMethodCallExprDTO.setBlockId(blockId);

@@ -17,4 +17,9 @@ public class LastSymbolDetector {
     private String symbolName;
     private Position symbolPostion;
 
+    public void saveLastSymbol(String symbolType, String symbolName, Position symbolPostion) {
+        this.symbolType = symbolType;
+        this.symbolName = symbolName;
+        this.symbolPostion = symbolPostion;
+    }
 }
