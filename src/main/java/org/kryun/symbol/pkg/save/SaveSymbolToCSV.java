@@ -60,12 +60,12 @@ public class SaveSymbolToCSV implements SymbolSaver {
             if (!directory.exists()) {
                 boolean mkdir = directory.mkdirs();
                 if (mkdir) {
-                    logger.info("SaveSymbolToCSV::createDirectory::" + directoryPath + " is created");
+                    logger.debug("SaveSymbolToCSV::createDirectory::" + directoryPath + " is created");
                 } else {
                     throw new Exception("SaveSymbolToCSV::createDirectory::" + directoryPath + " is not created");
                 }
             } else {
-                logger.info("SaveSymbolToCSV::createDirectory::" + directoryPath + " is already exist");
+                logger.debug("SaveSymbolToCSV::createDirectory::" + directoryPath + " is already exist");
             }
             return directoryPath;
         } catch (Exception e) {

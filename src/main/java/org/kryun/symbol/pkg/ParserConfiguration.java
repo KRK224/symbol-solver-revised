@@ -17,14 +17,13 @@ public class ParserConfiguration {
         return new ProjectParser(symbolBuilder, symbolSaver);
     }
 
-    public static SymbolBuilder getFileSymbolBuilder(Long symbolStatusId, String symbolDataPath) {
-        return new SymbolBuilderWithFile(symbolStatusId, symbolDataPath);
-    }
-
     public static SymbolBuilder getJavaParserSymbolBuilder(Long symbolStatusId, String projectPath, String projectName, Boolean isDependency) {
         return new SymbolBuilderWithJavaParser(symbolStatusId, projectPath, projectName, isDependency);
     }
 
+    public static SymbolBuilder getFileSymbolBuilder(Long symbolStatusId, String symbolDataPath) {
+        return new SymbolBuilderWithFile(symbolStatusId, symbolDataPath);
+    }
 
     public static SymbolSaver getFileSymbolSaver(String projectName, String refName, String fileFormat) throws IllegalArgumentException {
         if (fileFormat.equals("csv")) {

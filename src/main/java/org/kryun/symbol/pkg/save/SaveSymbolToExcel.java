@@ -94,12 +94,12 @@ public class SaveSymbolToExcel implements SymbolSaver {
             if (!resultDirectory.exists()) {
                 boolean mkdirs = resultDirectory.mkdirs();
                 if (mkdirs) {
-                    logger.info("SaveSymbolToExcel::createDirectory::" + resultDirectory.getAbsolutePath() + " is created");
+                    logger.debug("SaveSymbolToExcel::createDirectory::" + resultDirectory.getAbsolutePath() + " is created");
                 } else {
                     throw new Exception("SaveSymbolToExcel::createDirectory: " + resultDirectory.getAbsolutePath() + " is not created");
                 }
             } else {
-                logger.info("Folder already exists");
+                logger.debug("Folder already exists");
             }
 
             savePath = resultDirectory.getAbsolutePath() + "/" + formatedNow + projectName + ".xlsx";

@@ -6,7 +6,7 @@ import org.kryun.symbol.javaparser.model.exception.SaveSymbolException;
 import org.kryun.symbol.model.dto.SymbolStatusDTO;
 import org.kryun.symbol.pkg.ProjectParser;
 import org.kryun.symbol.pkg.builder.interfaces.SymbolBuilder;
-import org.kryun.symbol.pkg.save.ParserConfiguration;
+import org.kryun.symbol.pkg.ParserConfiguration;
 import org.kryun.symbol.pkg.save.interfaces.SymbolSaver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

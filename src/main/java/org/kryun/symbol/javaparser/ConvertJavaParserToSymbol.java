@@ -320,7 +320,7 @@ public class ConvertJavaParserToSymbol implements SymbolContainer {
         } else if (Statement.class.isAssignableFrom(node.getClass())) {
             /**
              * Statement를 상속받은 노드 중, 부모가 ifStmt인 경우에 block 처리 하지 않음.
-             * * while, do-while, for, forEach문 모두 자식으로 하나의 statement를 가질 수 있고 이를 body-block 처리하자 않았기 때문.
+             * * while, do-while, for, forEach문 모두 자식으로 하나의 statement를 가질 수 있고 이를 body-block 처리하지 않았기 때문.
              * * 또한, thenStmt와 elseStmt에 다른 제어문이 올 수 있는데... 모든 statement의 block을 저장할 때 type을 위해 부모를 확인해야하는 번거러움이 존재.
              *
              * ifStmt의 경우, thenStmt와 elseStmt가 따로 Node 형태로 존재하지 않아, 2개의 Statement가 ifStmt Block을 부모로 갖는다.

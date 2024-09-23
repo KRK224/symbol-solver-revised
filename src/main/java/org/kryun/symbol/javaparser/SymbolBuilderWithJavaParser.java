@@ -39,14 +39,14 @@ public class SymbolBuilderWithJavaParser implements SymbolBuilder {
     @Override
     public SymbolContainer build() throws Exception {
         try {
-            logger.info("Start parsing project with JavaParser");
+            logger.debug("Start parsing project with JavaParser");
             ProjectRoot projectRoot = getProjectRoot(projectPath + "/" + projectName, 0);
-            logger.info("projectRoot: " + projectRoot);
+            logger.debug("projectRoot: " + projectRoot);
             List<SourceRoot> sourceRootList = projectRoot.getSourceRoots();
-            logger.info("#######for 0 ######## : " + sourceRootList);
+            logger.debug("#######for 0 ######## : " + sourceRootList);
 
             for (SourceRoot sourceRoot : sourceRootList) {
-                logger.info("#######for 1 ########");
+                logger.debug("#######for 1 ########");
                 List<ParseResult<CompilationUnit>> parseResults = sourceRoot.tryToParse();
                 for (ParseResult<CompilationUnit> parseResult : parseResults) {
                     Optional<CompilationUnit> optionalCompilationUnit = parseResult.getResult();
@@ -54,7 +54,7 @@ public class SymbolBuilderWithJavaParser implements SymbolBuilder {
                         CompilationUnit cu = optionalCompilationUnit.get();
                         String fileName = cu.getStorage().get().getPath().toString();
                         String srcPath = fileName.replace(projectPath + "/", "");
-                        logger.info("fileName:" + fileName);
+                        logger.debug("fileName:" + fileName);
                         if (srcPath.endsWith("Testcode.java")) {
                             System.out.println("fileName is Testcode");
                         }
@@ -74,8 +74,8 @@ public class SymbolBuilderWithJavaParser implements SymbolBuilder {
     }
 
     private ProjectRoot getProjectRoot(String projectPath, int depth) throws Exception {
-        logger.info("find ProjectRoot recursively, depth: " + depth);
-        logger.info("project path: " + projectPath);
+        logger.debug("find ProjectRoot recursively, depth: " + depth);
+        logger.debug("project path: " + projectPath);
         if (depth > 2) {
             throw new Exception("can't find ProjectRoot, please check package and src directory");
         }

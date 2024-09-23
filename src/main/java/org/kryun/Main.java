@@ -1,18 +1,25 @@
 package org.kryun;
 
+import java.util.Map;
+import org.kryun.global.config.AppConfig;
 import org.kryun.symbol.model.dto.SymbolStatusDTO;
 import org.kryun.symbol.service.SaveAsSymbol;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws Exception {
-        String projectPath = "/Users/krk224/Documents/Tmax/1_source/Projects";
-        String rootPath = "/Users/krk224/Documents/Tmax/1_source";
         SaveAsSymbol saveAsSymbol = new SaveAsSymbol();
-        SymbolStatusDTO symbolStatusDTO = saveAsSymbol.saveAsSymbol("test-px", projectPath, null, "excel");
-//        SymbolStatusDTO symbolStatusDTO = saveAsSymbol.saveAsSymbol("JavaParser-AST-CodeGen", rootPath, null, "csv");
+        String projectPath = AppConfig.TARGET_PATH==null ? AppConfig.WORKSPACE_PATH:AppConfig.TARGET_PATH;
+        String fileType = AppConfig.EXTRACTED_FILE_TYPE==null ? "csv":AppConfig.EXTRACTED_FILE_TYPE;
+        String symbolSourcePath = AppConfig.SYMBOL_SOURCE_PATH;
+        if (AppConfig.TARGET_PROJECT==null)
+            throw new IllegalArgumentException("You must provide a project name");
 
-
+        SymbolStatusDTO symbolStatusDTO = saveAsSymbol.saveAsSymbol(AppConfig.TARGET_PROJECT, projectPath, symbolSourcePath, fileType);
+        logger.info("Symbol status: {}", symbolStatusDTO.getStatusEnum());
     }
 
 }
