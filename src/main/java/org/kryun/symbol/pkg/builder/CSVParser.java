@@ -298,7 +298,6 @@ public class CSVParser implements SymbolContainer {
 
     private Object createInstanceByBuilder(Class<?> classType, List<String> headerList, CSVRecord record) throws Exception {
         Long lastId = -1L;
-        System.out.println(classType.getName());
         Class<?> builderClass = Class.forName(classType.getName() + "$" + classType.getSimpleName() + "Builder");
         Object builderInstance = classType.getMethod("builder").invoke(null);
         for (int i = 0; i < headerList.size(); i++) {

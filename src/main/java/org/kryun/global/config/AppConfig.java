@@ -11,7 +11,7 @@ public class AppConfig {
         Properties properties = new Properties();
         try {
             properties.load(AppConfig.class.getClassLoader().getResourceAsStream("application.properties"));
-            TARGET_PATH = properties.getProperty("target.path");
+            PARENT_PATH = properties.getProperty("parent.path");
             TARGET_PROJECT = properties.getProperty("target.project");
             SYMBOL_SOURCE_PATH = properties.getProperty("symbol.source.path");
             EXTRACTED_FILE_TYPE = properties.getProperty("extracted.file.type");
@@ -22,13 +22,16 @@ public class AppConfig {
 
     // application
     public static final String APP_NAME = "symbol-solver-test";
-    public static final String APP_VERSION = "0.1.0";
+    public static final String APP_VERSION = "1.0.0";
     // file workspace
     public static final String WORKSPACE_PATH = System.getProperty("user.dir") + "/workspace";
-    public static String TARGET_PATH;
+    public static String PARENT_PATH;
     public static String TARGET_PROJECT;
-    // 이미 저장된 symbol 파일을 읽어 오는 경우
-    public static String SYMBOL_SOURCE_PATH;
+    // if you want to save symbol data to file, use this field.
     public static String EXTRACTED_FILE_TYPE;
+
+    // read analyzed symbol data from file
+    public static String SYMBOL_SOURCE_PATH;
+
 
 }

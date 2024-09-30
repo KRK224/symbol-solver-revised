@@ -1,6 +1,5 @@
 package org.kryun;
 
-import java.util.Map;
 import org.kryun.global.config.AppConfig;
 import org.kryun.symbol.model.dto.SymbolStatusDTO;
 import org.kryun.symbol.service.SaveAsSymbol;
@@ -12,13 +11,13 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         SaveAsSymbol saveAsSymbol = new SaveAsSymbol();
-        String projectPath = AppConfig.TARGET_PATH==null ? AppConfig.WORKSPACE_PATH:AppConfig.TARGET_PATH;
+        String parentPath = AppConfig.PARENT_PATH==null ? AppConfig.WORKSPACE_PATH:AppConfig.PARENT_PATH;
         String fileType = AppConfig.EXTRACTED_FILE_TYPE==null ? "csv":AppConfig.EXTRACTED_FILE_TYPE;
         String symbolSourcePath = AppConfig.SYMBOL_SOURCE_PATH;
         if (AppConfig.TARGET_PROJECT==null)
             throw new IllegalArgumentException("You must provide a project name");
 
-        SymbolStatusDTO symbolStatusDTO = saveAsSymbol.saveAsSymbol(AppConfig.TARGET_PROJECT, projectPath, symbolSourcePath, fileType);
+        SymbolStatusDTO symbolStatusDTO = saveAsSymbol.saveAsSymbol(AppConfig.TARGET_PROJECT, parentPath, symbolSourcePath, fileType);
         logger.info("Symbol status: {}", symbolStatusDTO.getStatusEnum());
     }
 

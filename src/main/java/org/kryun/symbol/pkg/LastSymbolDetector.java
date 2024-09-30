@@ -15,11 +15,11 @@ public class LastSymbolDetector {
     private String srcPath;
     private String symbolType;
     private String symbolName;
-    private Position symbolPostion;
+    private Position symbolPosition;
 
-    public void saveLastSymbol(String symbolType, String symbolName, Position symbolPostion) {
+    public void saveLastSymbol(String symbolType, String symbolName, Position symbolPosition) {
         this.symbolType = symbolType;
         this.symbolName = symbolName;
-        this.symbolPostion = symbolPostion;
+        this.symbolPosition = symbolPosition;
     }
 }
