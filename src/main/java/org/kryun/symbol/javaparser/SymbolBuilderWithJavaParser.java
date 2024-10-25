@@ -2,6 +2,7 @@ package org.kryun.symbol.javaparser;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.utils.SymbolSolverCollectionStrategy;
 import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
@@ -59,7 +60,6 @@ public class SymbolBuilderWithJavaParser implements SymbolBuilder {
                             System.out.println("fileName is Testcode");
                         }
                         convertJavaParserToSymbol.visit(cu, srcPath);
-
                     }
                 }
             }
@@ -70,6 +70,8 @@ public class SymbolBuilderWithJavaParser implements SymbolBuilder {
             throw new SaveSymbolException(SymbolStatusEnum.UNAVAILAbLE, e.getMessage(), "Error in SymbolBuilderWithJavaParser.build()");
         } finally {
             convertJavaParserToSymbol.printLastSymbol();
+            // release type cache memory
+            JavaParserFacade.clearInstances();
         }
     }
 
