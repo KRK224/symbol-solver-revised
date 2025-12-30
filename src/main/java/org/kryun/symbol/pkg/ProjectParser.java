@@ -1,23 +1,21 @@
 package org.kryun.symbol.pkg;
 
-import lombok.RequiredArgsConstructor;
 import org.kryun.symbol.pkg.builder.interfaces.SymbolBuilder;
-import org.kryun.symbol.pkg.builder.interfaces.SymbolContainer;
 import org.kryun.symbol.pkg.save.interfaces.SymbolSaver;
+import org.springframework.stereotype.Component;
 
-@RequiredArgsConstructor
+@Component
 public class ProjectParser {
+
     private final SymbolBuilder symbolBuilder;
     private final SymbolSaver symbolSaver;
 
+    public ProjectParser(SymbolBuilder symbolBuilder, SymbolSaver symbolSaver) {
+        this.symbolBuilder = symbolBuilder;
+        this.symbolSaver = symbolSaver;
+    }
+
     public void parseProject() throws Exception {
-        SymbolContainer symbolContainer  = symbolBuilder.build();
-        symbolSaver.save(symbolContainer);
-        symbolContainer.clear();
+        symbolSaver.save(symbolBuilder.build());
     }
-
-    public String getSymbolSaverInfo() {
-        return symbolSaver.getInfo();
-    }
-
 }

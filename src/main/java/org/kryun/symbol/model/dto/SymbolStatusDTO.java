@@ -1,48 +1,18 @@
 package org.kryun.symbol.model.dto;
 
-
-import lombok.Getter;
-import lombok.Setter;
-
 import java.sql.Timestamp;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.kryun.global.enums.symbol.SymbolStatusEnum;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class SymbolStatusDTO {
-
     private Long symbolStatusId;
-    private Long projId;
-    private Long refId;
-    private Long tagId;
-    private Long commitId;
-    private SymbolStatusEnum statusEnum;
-    private Timestamp createdTime;
+    private Long symbolFileId;
     private Timestamp updatedTime;
-
-    public SymbolStatusDTO() {
-        this.statusEnum = SymbolStatusEnum.NULL;
-    }
-
-    public SymbolStatusDTO(Long projId, Long refId, Long tagId, Long commitId) {
-        this.projId = projId;
-        this.refId = refId;
-        this.tagId = tagId;
-        this.commitId = commitId;
-        this.statusEnum = SymbolStatusEnum.NULL;
-    }
-
-    @Override
-    public String toString() {
-        return "SymbolStatusDTO {symbolStatusId=" + symbolStatusId +
-                ", projId=" + projId +
-                ", refId=" + refId +
-                ", tagId=" + tagId +
-                ", commitId=" + commitId +
-                ", statusEnum=" + statusEnum +
-                ", createdTime=" + createdTime +
-                ", updatedTime=" + updatedTime +
-                "}\n";
-    }
-
+    private Long lastSymbolId;
+    private SymbolStatusEnum statusEnum;
 }

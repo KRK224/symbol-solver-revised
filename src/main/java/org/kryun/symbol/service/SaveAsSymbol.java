@@ -5,26 +5,23 @@ import org.kryun.global.enums.symbol.SymbolStatusEnum;
 import org.kryun.symbol.javaparser.model.exception.SaveSymbolException;
 import org.kryun.symbol.model.dto.SymbolStatusDTO;
 import org.kryun.symbol.pkg.ProjectParser;
-import org.kryun.symbol.pkg.builder.interfaces.SymbolBuilder;
-import org.kryun.symbol.pkg.ParserConfiguration;
-import org.kryun.symbol.pkg.save.interfaces.SymbolSaver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
+@Service
 public class SaveAsSymbol {
     private final Logger logger = LoggerFactory.getLogger(SaveAsSymbol.class);
+    private final ProjectParser projectParser;
+
+    public SaveAsSymbol(ProjectParser projectParser) {
+        this.projectParser = projectParser;
+    }
 
     public SymbolStatusDTO saveAsSymbol(String projName, String projectPath, String resultPath, String fileType) throws Exception {
-        SymbolStatusDTO symbolStatusDTO = new SymbolStatusDTO(1L, 1L, null, 1L);
-        symbolStatusDTO.setStatusEnum(SymbolStatusEnum.ON_GOING);
+        SymbolStatusDTO symbolStatusDTO = new SymbolStatusDTO(1L, 1L, null, 1L, SymbolStatusEnum.ON_GOING);
         symbolStatusDTO.setSymbolStatusId(2L);
         try {
-            ProjectParser projectParser;
-            if (resultPath!=null) {
-                projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, resultPath, fileType);
-            } else {
-                projectParser = getProjectParser(symbolStatusDTO.getSymbolStatusId(), projectPath, projName, false, fileType);
-            }
             projectParser.parseProject();
             symbolStatusDTO.setStatusEnum(SymbolStatusEnum.COMPLETED);
             return symbolStatusDTO;
@@ -37,23 +34,5 @@ public class SaveAsSymbol {
 
             return symbolStatusDTO;
         }
-    }
-
-    private ProjectParser getProjectParser(Long symbolStatusId, String projectPath, String projectName, Boolean isDependency, String fileType)
-            throws Exception {
-        SymbolSaver symbolSaver = ParserConfiguration.getFileSymbolSaver(projectPath, projectName, fileType);
-
-        SymbolBuilder symbolBuilder = ParserConfiguration.getJavaParserSymbolBuilder(symbolStatusId, projectPath, projectName, isDependency);
-
-        return ParserConfiguration.getProjectParser(symbolBuilder, symbolSaver);
-    }
-
-    private ProjectParser getProjectParser(Long symbolStatusId, String projectPath, String projectName, String resultPath, String fileType)
-            throws Exception {
-        SymbolSaver symbolSaver = ParserConfiguration.getFileSymbolSaver(projectPath, projectName, fileType);
-
-        SymbolBuilder symbolBuilder = ParserConfiguration.getFileSymbolBuilder(symbolStatusId, resultPath);
-
-        return ParserConfiguration.getProjectParser(symbolBuilder, symbolSaver);
     }
 }

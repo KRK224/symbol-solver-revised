@@ -1,35 +1,40 @@
 package org.kryun.symbol.pkg;
 
-import java.sql.Connection;
+import org.kryun.global.config.AppProperties;
 import org.kryun.symbol.javaparser.SymbolBuilderWithJavaParser;
 import org.kryun.symbol.pkg.builder.SymbolBuilderWithFile;
 import org.kryun.symbol.pkg.builder.interfaces.SymbolBuilder;
 import org.kryun.symbol.pkg.save.SaveSymbolToCSV;
 import org.kryun.symbol.pkg.save.SaveSymbolToExcel;
 import org.kryun.symbol.pkg.save.interfaces.SymbolSaver;
-
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+@Configuration
 public class ParserConfiguration {
 
-    private ParserConfiguration() {
+    private final AppProperties appProperties;
+
+    public ParserConfiguration(AppProperties appProperties) {
+        this.appProperties = appProperties;
     }
 
-    public static ProjectParser getProjectParser(SymbolBuilder symbolBuilder, SymbolSaver symbolSaver) {
-        return new ProjectParser(symbolBuilder, symbolSaver);
+    @Bean
+    public SymbolBuilder symbolBuilder() {
+        String symbolSourcePath = appProperties.getSymbolSourcePath();
+        if (symbolSourcePath != null && !symbolSourcePath.isEmpty()) {
+            return new SymbolBuilderWithFile(1L, symbolSourcePath);
+        } else {
+            return new SymbolBuilderWithJavaParser(1L, appProperties.getParentPath(), appProperties.getTargetProject(), false);
+        }
     }
 
-    public static SymbolBuilder getJavaParserSymbolBuilder(Long symbolStatusId, String projectPath, String projectName, Boolean isDependency) {
-        return new SymbolBuilderWithJavaParser(symbolStatusId, projectPath, projectName, isDependency);
-    }
-
-    public static SymbolBuilder getFileSymbolBuilder(Long symbolStatusId, String symbolDataPath) {
-        return new SymbolBuilderWithFile(symbolStatusId, symbolDataPath);
-    }
-
-    public static SymbolSaver getFileSymbolSaver(String projectName, String refName, String fileFormat) throws IllegalArgumentException {
+    @Bean
+    public SymbolSaver symbolSaver() throws IllegalArgumentException {
+        String fileFormat = appProperties.getExtractedFileType();
         if (fileFormat.equals("csv")) {
-            return new SaveSymbolToCSV(projectName, refName);
+            return new SaveSymbolToCSV(appProperties.getTargetProject(), appProperties.getParentPath());
         } else if (fileFormat.equals("excel")) {
-            return new SaveSymbolToExcel(projectName, refName);
+            return new SaveSymbolToExcel(appProperties.getTargetProject(), appProperties.getParentPath());
         } else {
             throw new IllegalArgumentException("Invalid file format");
         }
